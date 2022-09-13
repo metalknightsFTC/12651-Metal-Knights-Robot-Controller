@@ -4,6 +4,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+
+import org.firstinspires.ftc.teamcode.Enums.Motor;
+import org.firstinspires.ftc.teamcode.Enums.SelectedDrive;
 //import com.qualcomm.robotcore.util.Hardware;
 
 public class OdometryControl {
@@ -13,7 +16,7 @@ public class OdometryControl {
     //229mm tolerance
     float diameter = 50f; //50mm 1.96in
     int cpr = 8192;
-    float c = (float)((2 * Math.PI * (diameter / 2)) / cpr);
+    float c = (float)((2 * Math.PI * (diameter / 2)));
     Gamepad lGpad1;
     HardwareMap lHardwareMap;
     Position robotPosition;
@@ -22,6 +25,8 @@ public class OdometryControl {
     DcMotorEx right;
     DcMotorEx left;
     DcMotorEx rear;
+
+    float heading = 0f;
 
     float currentLeftEncoderRotation = 0;
     float currentRightEncoderRotation = 0;
@@ -60,6 +65,38 @@ public class OdometryControl {
 
         SetStickPower(deltaX,deltaZ,deltaTheta);
     }
+
+    public float[] CalculateRobotPosition()
+    {
+
+        float deltaX = 0;
+        float deltaZ = 0;
+        float deltaTheta = 0;
+
+        leftEncoderRotation = currentLeftEncoderRotation;
+        rightEncoderRotation = currentRightEncoderRotation;
+        rearEncoderRotation = currentRearEncoderRotation;
+
+        currentRightEncoderRotation = right.getCurrentPosition();
+        currentRearEncoderRotation = rear.getCurrentPosition();
+        currentLeftEncoderRotation = left.getCurrentPosition();
+
+        float deltaLeft = (currentLeftEncoderRotation - leftEncoderRotation)/cpr;
+        float deltaRight = (currentRightEncoderRotation - rightEncoderRotation)/cpr;
+        float deltaBack = (currentRearEncoderRotation - rearEncoderRotation)/cpr;
+
+        deltaZ = (float) (((((deltaLeft * c) * Math.cos(heading))
+                        + ((deltaRight * c) * Math.cos(heading))) / 2f)
+                        - (deltaBack * c) * Math.sin(heading));
+
+        deltaX = (float) (((deltaBack * c) * Math.cos(heading)) + ((((deltaLeft * c) * Math.sin(heading))
+                        + ((deltaRight * c) * Math.sin(heading))) / 2f));
+
+        deltaTheta = c * (deltaRight - deltaLeft) / .25f;
+
+        return new float[] {deltaX,deltaZ,deltaTheta};
+    }
+
 
     public void CalculatePosition()
     {
