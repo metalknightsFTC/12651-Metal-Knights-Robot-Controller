@@ -64,7 +64,7 @@ public class TensorFlow extends LinearOpMode {
    *  FreightFrenzy_BC.tflite  0: Ball,  1: Cube
    *  FreightFrenzy_DM.tflite  0: Duck,  1: Marker
    */
-    private static final String TFOD_MODEL_ASSET = "model_unquant.tflite";
+    private static final String TFOD_MODEL_ASSET = "java/org/firstinspires/ftc/teamcode/model_unquant.tflite";
     private static final String[] LABELS = {
       "Class 1",
       "Class 2"
@@ -189,6 +189,7 @@ return 0;
        tfodParameters.isModelTensorFlow2 = true;
        tfodParameters.inputSize = 320;
        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-       tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
+       //tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
+       tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
     }
 }

@@ -12,7 +12,7 @@ public class Vector3 {
     }
 
     public Vector3 Add(Vector3 vector3){
-        x +=vector3.x;
+        x += vector3.x;
         y += vector3.y;
         z += vector3.z;
         return  this;

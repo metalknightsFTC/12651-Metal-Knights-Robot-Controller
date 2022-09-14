@@ -38,14 +38,14 @@ public class DriveTrainCode {
         }
     }
 
-    public void  UpdateDriveTrain(SelectedDrive driveType,float x,float y,float t) {
+    public void  UpdateDriveTrain(SelectedDrive driveType,Vector3 direction) {
         UpdateInput();
         if (driveType == SelectedDrive.mecanum) {
             UpdateMecanum();
         } else if (driveType == SelectedDrive.tank) {
             UpdateTank();
         } else if (driveType == SelectedDrive.autonomous) {
-            SimulateStick(x,y,t);
+            SimulateStick(direction.x,direction.z,direction.y);
         }
     }
 
