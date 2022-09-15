@@ -64,7 +64,7 @@ public class TensorFlow extends LinearOpMode {
    *  FreightFrenzy_BC.tflite  0: Ball,  1: Cube
    *  FreightFrenzy_DM.tflite  0: Duck,  1: Marker
    */
-    private static final String TFOD_MODEL_ASSET = "java/org/firstinspires/ftc/teamcode/model_unquant.tflite";
+    private static final String TFOD_MODEL_ASSET =  "/sdcard/FIRST/tflitemodels/model.tflite";
     private static final String[] LABELS = {
       "Class 1",
       "Class 2"
@@ -141,7 +141,6 @@ public class TensorFlow extends LinearOpMode {
                                 recognition.getLeft(), recognition.getTop());
                         telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
                                 recognition.getRight(), recognition.getBottom());
-                        telemetry.addData("distance",CalculateDistance(recognition.getBottom(), recognition.getTop()));
                         i++;
                       }
                       telemetry.update();

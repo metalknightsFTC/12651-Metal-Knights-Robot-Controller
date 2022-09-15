@@ -46,7 +46,26 @@ public class AutoFunctions extends LinearOpMode {
     OdometryControl odometryControl;
     private EndPoint endPoint;
     private StartPoint startPoint = StartPoint.UnSet;
+    private SubSystemControl subSystemControl;
+    String lift = "Lift";
+    String grabber = "Grabber";
 
+    String[] motors = new String[1];
+    String[] servos = new String[1];
+
+    private static final String TFOD_MODEL_ASSET =  "/sdcard/FIRST/tflitemodels/model.tflite";
+    private static final String[] LABELS = {
+            "Class 1",
+            "Class 2"
+    };
+    private static final String VUFORIA_KEY =
+            "AWdhXNj/////AAABmRSQQCEQY0Z+t33w9GIgzFpsCMHl909n/+kfa54XDdq6fPjSi/8sBVItFQ/J/d5SoF48FrZl4Nz1zeCrwudfhFr4bfWTfh5oiLwKepThOhOYHf8V/GemTPe0+igXEu4VhznKcr3Bm5DiLe2b6zBVzvWFDWEHI/mkhLxRkU+llmwvitwodynP2arFgZ43thde9GJPCBFne/q6tPXeeN8/PoTUOtycTrnTkL6fBuHelMMnvN2RjqnMJ9SBUcaVX8DsWukq1fDr29O8bguAJU5JKxt9E3+XXiexpE/EJ9jxJc7YoMtpxfMro/e0sm9gRNckw4uPtZHnaoDjFhaK9t2D7kQQc3rwgK1OEZlY7FGQyy8g";;
+    private VuforiaLocalizer vuforia;
+
+    private TFObjectDetector tfod;
+
+
+    @Override
     public void runOpMode() {
 
         Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
@@ -55,59 +74,122 @@ public class AutoFunctions extends LinearOpMode {
         right = hardwareMap.get(DcMotorEx.class, "frontRight");
         left = hardwareMap.get(DcMotorEx.class, "frontLeft");
         rear = hardwareMap.get(DcMotorEx.class, "backRight");
-        odometryControl = new OdometryControl(right, left, rear, hardwareMap, gamepad1);
 
+        motors[0] = lift;
+        servos[0] = grabber;
+
+        subSystemControl = new SubSystemControl(hardwareMap, motors, servos);
 
         SetStartPoint();
         OperateTensorFlow();
-
-        telemetry.addData("Path: ", "Set, end: ",endPoint,", Start: ",startPoint);
-        telemetry.addData("Drive Train Status: ", "Ready");
-        telemetry.addData("Odometry Status: ", "Good");
+        InitializeOdometry();
+        telemetry.addData("Path Set", ", End: ", endPoint, ", Start: ", startPoint);
         telemetry.addData("Status: ", "Initialized");
         telemetry.update();
         waitForStart();
 
+        while (odometryControl.robotPosition.z < 24f) {
 
-        while (opModeIsActive()) {
-
-            while (odometryControl.robotPosition.z<940f){
-
-
-                odometryControl.SetStickPower(0f,.5f,0f);
-
-            }
-            odometryControl.SetStickPower(0f,0,0f);
-
+            odometryControl.SetStickPower(0f, .5f, 0f);
             telemetry.addData("x", odometryControl.robotPosition.x);
             telemetry.addData("z", odometryControl.robotPosition.z);
             telemetry.addData("turn", odometryControl.robotPosition.currentHeading);
             telemetry.update();
 
         }
+        odometryControl.SetStickPower(0f, 0f, 0f);
+
     }
 
     void OperateTensorFlow()
     {
-        telemetry.addData("TensorFlow: ", "Good");
+        initVuforia();
+        initTfod();
+        if (tfod != null) {
+            tfod.activate();
+            tfod.setZoom(1, 16.0/9.0);
+
+            if (tfod != null) {
+                // getUpdatedRecognitions() will return null if no new information is available since
+                // the last time that call was made.
+                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+                if (updatedRecognitions != null) {
+                    telemetry.addData("# Object Detected", updatedRecognitions.size());
+                    // step through the list of recognitions and display boundary info.
+                    int i = 0;
+                    for (Recognition recognition : updatedRecognitions) {
+                        telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
+                                recognition.getLeft(), recognition.getTop());
+                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
+                                recognition.getRight(), recognition.getBottom());
+                        i++;
+                    }
+                }
+            }
+        }
     }
 
     void  SetStartPoint(){
         while(startPoint == StartPoint.UnSet)
         {
+            telemetry.addData("A: ","Red Side Left");
+            telemetry.addData("X: ","Red Side Right");
+            telemetry.addData("Y: ","Blue Side Left");
+            telemetry.addData("B: ","Blue Side Right");
+            telemetry.update();
             if (gamepad1.a){
                 startPoint = StartPoint.redLeft;
+                return;
             }
             if (gamepad1.x){
                 startPoint = StartPoint.redRight;
+                return;
             }
             if (gamepad1.y){
                 startPoint = StartPoint.blueLeft;
+                return;
             }
             if (gamepad1.b){
                 startPoint = StartPoint.blueRight;
+                return;
             }
         }
+    }
+
+    void InitializeOdometry(){
+        odometryControl = new OdometryControl(right, left, rear, hardwareMap, gamepad1);
+        telemetry.addData("Odometry Status: ", "Ready");
+    }
+
+    private void initVuforia() {
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+         */
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+        // Loading trackables is not necessary for the TensorFlow Object Detection engine.
+    }
+
+    /**
+     * Initialize the TensorFlow Object Detection engine.
+     */
+    private void initTfod() {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfodParameters.minResultConfidence = 0.5f;
+        tfodParameters.isModelTensorFlow2 = true;
+        tfodParameters.inputSize = 320;
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        //tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
+        tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
     }
 
 }

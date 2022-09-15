@@ -16,7 +16,7 @@ public class OdometryControl {
     //229mm tolerance
     float diameter = 1.96f; //50mm 1.96in
     int cpr = 8192;
-    double c = (float) (2 * Math.PI) * (diameter / 2);
+    double c = (float) (2 * Math.PI) * (diameter / 2);//6.1575216
     Gamepad lGpad1;
     HardwareMap lHardwareMap;
     Position robotPosition;
