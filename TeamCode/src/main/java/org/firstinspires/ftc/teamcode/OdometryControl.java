@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -43,15 +44,20 @@ public class OdometryControl {
         left = left1;
         rear = rear1;
 
-        lHardwareMap = hardwareMap;
+        lHardwareMap = hardwareMap;/*
         driveTrainCode = new DriveTrainCode(lGpad1, lHardwareMap);
         rear.setDirection(DcMotorSimple.Direction.REVERSE);
         driveTrainCode.InvertMotorDirection(Motor.frontLeft);
         driveTrainCode.InvertMotorDirection(Motor.backLeft);
-        driveTrainCode.InvertMotorDirection(Motor.backRight);
-        leftEncoderRotation = left.getCurrentPosition();
-        rightEncoderRotation = right.getCurrentPosition();
-        rearEncoderRotation = rear.getCurrentPosition();
+        driveTrainCode.InvertMotorDirection(Motor.backRight);*/
+
+        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        currentLeftEncoderRotation = left.getCurrentPosition();
+        currentRightEncoderRotation = right.getCurrentPosition();
+        currentRearEncoderRotation = rear.getCurrentPosition();
     }
     //endregion
 
