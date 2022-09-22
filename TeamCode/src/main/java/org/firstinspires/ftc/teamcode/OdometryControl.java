@@ -12,8 +12,8 @@ import org.firstinspires.ftc.teamcode.Enums.SelectedDrive;
 
 public class OdometryControl {
 
-    float omniBaseWidth = 10.5f; //266.7f mm 10.5in
-    float omniBaseLength = 4.5f; //114.3f mm 4.5in
+    float omniBaseWidth = 9.7f; //266.7f mm 10.5in
+    float omniBaseLength = 3.65f; //114.3f mm 4.5in
     //229mm tolerance
     float diameter = 1.96f; //50mm 1.96in
     int cpr = 8192;
@@ -37,7 +37,8 @@ public class OdometryControl {
     double rearEncoderRotation = 0;
 
     //region Constructor
-    public  OdometryControl(DcMotorEx right1, DcMotorEx left1, DcMotorEx rear1, HardwareMap hardwareMap, Gamepad gpad){
+    public  OdometryControl(DcMotorEx right1, DcMotorEx left1, DcMotorEx rear1, HardwareMap hardwareMap, Gamepad gpad)
+    {
         robotPosition = new Position();
         lGpad1 = gpad;
         right = right1;
@@ -46,7 +47,6 @@ public class OdometryControl {
 
         lHardwareMap = hardwareMap;/*
         driveTrainCode = new DriveTrainCode(lGpad1, lHardwareMap);
-        rear.setDirection(DcMotorSimple.Direction.REVERSE);
         driveTrainCode.InvertMotorDirection(Motor.frontLeft);
         driveTrainCode.InvertMotorDirection(Motor.backLeft);
         driveTrainCode.InvertMotorDirection(Motor.backRight);*/
@@ -61,7 +61,8 @@ public class OdometryControl {
     }
     //endregion
 
-    public  void  MoveToPoint(Waypoint target){
+    public  void  MoveToPoint(Waypoint target)
+    {
         double distToTarget = Math.sqrt((Math.pow(target.xEnd, 2) - Math.pow(robotPosition.x, 2)) +
                 (Math.pow(target.zEnd, 2) - Math.pow(robotPosition.z, 2)));
 
@@ -75,6 +76,8 @@ public class OdometryControl {
     //region current position calculator algorithm
     public double[] CalculateRobotPosition()
     {
+
+        heading = robotPosition.currentHeading;
 
         double deltaX = 0;
         double deltaZ = 0;
@@ -99,7 +102,12 @@ public class OdometryControl {
         deltaX = (((deltaBack * c) * Math.cos(heading)) + ((((deltaLeft * c) * Math.sin(heading))
                         + ((deltaRight * c) * Math.sin(heading))) / 2f));
 
-        deltaTheta = (c * (deltaRight - deltaLeft)) / omniBaseWidth;
+        deltaTheta = ((c * (deltaRight - deltaLeft)) / omniBaseWidth)*(180/Math.PI);
+
+        if(deltaTheta <= 0.1 || deltaTheta >= -0.1)
+        {
+            deltaX = 0;
+        }
 
         return new double[] {deltaX,deltaZ,deltaTheta};
     }

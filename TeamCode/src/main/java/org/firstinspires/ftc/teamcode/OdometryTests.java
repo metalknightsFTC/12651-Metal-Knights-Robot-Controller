@@ -73,9 +73,14 @@ public class OdometryTests extends LinearOpMode {
         waitForStart();
 
         while(opModeIsActive()){
+            double[] deltas = odometryControl.CalculateRobotPosition();
+            odometryControl.robotPosition.x += deltas[0];
+            odometryControl.robotPosition.z += deltas[1];
+            odometryControl.robotPosition.currentHeading += deltas[2];
             telemetry.addData("X: ",odometryControl.robotPosition.x);
             telemetry.addData("Z: ",odometryControl.robotPosition.z);
             telemetry.addData("Heading: ",odometryControl.robotPosition.currentHeading);
+            telemetry.update();
         }
     }
 
