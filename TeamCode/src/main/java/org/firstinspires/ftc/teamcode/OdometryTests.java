@@ -18,12 +18,8 @@ import java.util.List;
 
 @Autonomous
 public class OdometryTests extends LinearOpMode {
-    private Blinker Expansion_Hub_1;
-    private Blinker Expansion_Hub_2;
-    private DcMotor fr;
-    private DcMotor br;
-    private DcMotor fl;
-    private DcMotor bl;
+    Blinker Expansion_Hub_1;
+    Blinker Expansion_Hub_2;
     private DcMotorEx right;
     private DcMotorEx left;
     private DcMotorEx rear;
@@ -37,7 +33,7 @@ public class OdometryTests extends LinearOpMode {
     String[] motors = new String[1];
     String[] servos = new String[1];
 
-    private static final String TFOD_MODEL_ASSET =  "/sdcard/FIRST/tflitemodels/model.tflite";
+    private static final String TFOD_MODEL_ASSET =  "PowerPlay.tflite";//"/sdcard/FIRST/tflitemodels/model.tflite";
     private static final String[] LABELS = {
             "Class 1",
             "Class 2"
@@ -62,7 +58,7 @@ public class OdometryTests extends LinearOpMode {
         motors[0] = lift;
         servos[0] = grabber;
 
-        //subSystemControl = new SubSystemControl(hardwareMap, motors, servos);
+        subSystemControl = new SubSystemControl(hardwareMap, motors, servos);
 
         //SetStartPoint();
         //OperateTensorFlow();
@@ -73,10 +69,15 @@ public class OdometryTests extends LinearOpMode {
         waitForStart();
 
         while(opModeIsActive()){
+            odometryControl.SetStickPower(0,1,0);
             double[] deltas = odometryControl.CalculateRobotPosition();
-            odometryControl.robotPosition.x += deltas[0];
-            odometryControl.robotPosition.z += deltas[1];
+
             odometryControl.robotPosition.currentHeading += deltas[2];
+            if (deltas[2] <= .2f || deltas[2] >= -.2f)
+            {
+                odometryControl.robotPosition.x += deltas[0];
+            }
+            odometryControl.robotPosition.z += deltas[1];
             telemetry.addData("X: ",odometryControl.robotPosition.x);
             telemetry.addData("Z: ",odometryControl.robotPosition.z);
             telemetry.addData("Heading: ",odometryControl.robotPosition.currentHeading);

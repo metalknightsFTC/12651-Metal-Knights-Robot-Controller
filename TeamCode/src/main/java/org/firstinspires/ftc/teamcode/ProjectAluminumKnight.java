@@ -8,12 +8,11 @@ import org.firstinspires.ftc.teamcode.Enums.SelectedDrive;
 @TeleOp
 public class ProjectAluminumKnight extends LinearOpMode {
 
-    private String lift = "lifter";
-    private String grabber = "grabber";
-    private  SubSystemControl subSystemControl;
+    final String lift = "lifter";
+    final String grabber = "grabber";
+    SubSystemControl subSystemControl;
     private boolean automatics = false;
     private int targetRotations = 0;
-    double totalLiftPercentage;
 
     @Override
     public void runOpMode(){
@@ -41,9 +40,9 @@ public class ProjectAluminumKnight extends LinearOpMode {
             subSystemControl.ManipulateMotor(lift).setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             subSystemControl.ManipulateMotor(lift).setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             subSystemControl.ManipulateMotor(lift).setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            if(gamepad1.back && automatics == false){
+            if(gamepad1.back && !automatics){
                 automatics = true;
-            }else if(gamepad1.back && automatics){
+            }else if(gamepad1.back){
                 automatics = false;
                 targetRotations = 0;
             }
@@ -81,7 +80,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
                     subSystemControl.ManipulateMotor(lift).setPower(0);
             }
 
-            telemetry.addData("Lift Target: ", (double)((double)targetRotations));
+            telemetry.addData("Lift Target: ", ((double)targetRotations));
             telemetry.addData("Current Lift Position: ", subSystemControl.ManipulateMotor(lift).getCurrentPosition());
             telemetry.update();
 

@@ -10,7 +10,6 @@ import org.firstinspires.ftc.teamcode.Enums.SelectedDrive;
 
 public class DriveTrainCode {
 
-    private double speedMultiplier;
     private double LSX;
     private double LSY;
     private double RSX;
@@ -20,14 +19,16 @@ public class DriveTrainCode {
     private  DcMotor backLeft;
     //local reference to gamepad 1 passed by ref to constructor
     private Gamepad lGpad;
-    private HardwareMap lHardwareMap;
+    HardwareMap lHardwareMap;
 
-    public  DriveTrainCode(Gamepad Gpad , HardwareMap hardwareMap){
+    public  DriveTrainCode(Gamepad Gpad , HardwareMap hardwareMap)
+    {
         InitializeGamepad(Gpad);
         InitializeHardware(hardwareMap);
     }
 
-    public void  UpdateDriveTrain(SelectedDrive driveType){
+    public void  UpdateDriveTrain(SelectedDrive driveType)
+    {
         UpdateInput();
         if (driveType == SelectedDrive.mecanum){
             UpdateMecanum();
@@ -38,19 +39,25 @@ public class DriveTrainCode {
         }
     }
 
-    public void  UpdateDriveTrain(SelectedDrive driveType,Vector3 direction) {
+    public void  UpdateDriveTrain(SelectedDrive driveType,Vector3 direction)
+    {
         UpdateInput();
-        if (driveType == SelectedDrive.mecanum) {
+        if (driveType == SelectedDrive.mecanum)
+        {
             UpdateMecanum();
-        } else if (driveType == SelectedDrive.tank) {
+        } else if (driveType == SelectedDrive.tank)
+        {
             UpdateTank();
-        } else if (driveType == SelectedDrive.autonomous) {
+        } else if (driveType == SelectedDrive.autonomous)
+        {
             SimulateStick(direction.x,direction.z,direction.y);
         }
     }
 
 
-    private  void UpdateMecanum(){
+    private  void UpdateMecanum()
+    {
+
         frontLeft.setPower((LSY)-(RSX)-(LSX));
         backLeft.setPower((LSY)-(RSX)+(LSX));
 
@@ -59,7 +66,8 @@ public class DriveTrainCode {
 
     }
 
-    public  void InvertMotorDirection(Motor selectedMotor){
+    public  void InvertMotorDirection(Motor selectedMotor)
+    {
         if (selectedMotor == Motor.frontRight){
             frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         }else if (selectedMotor == Motor.frontLeft){
@@ -71,7 +79,8 @@ public class DriveTrainCode {
         }
     }
 
-    private void  SimulateStick(float x, float y, float t){
+    private void  SimulateStick(float x, float y, float t)
+    {
 
         frontLeft.setPower((y)-(t)-(x));
         backLeft.setPower((y)-(t)+(x));
@@ -80,14 +89,16 @@ public class DriveTrainCode {
 
     }
 
-    private  void  UpdateTank(){
+    private  void  UpdateTank()
+    {
         frontLeft.setPower(LSY-RSX);
         backLeft.setPower((LSY)-(RSX));
         frontRight.setPower((LSY)+(RSX));
         backRight.setPower((LSY)+(RSX));
     }
 
-    private void UpdateInput(){
+    private void UpdateInput()
+    {
         LSX = lGpad.left_stick_x;
         LSY = lGpad.left_stick_y;
         RSX = lGpad.right_stick_x;
@@ -98,14 +109,14 @@ public class DriveTrainCode {
         lHardwareMap = hardwareMap;
         frontRight = lHardwareMap.get(DcMotor.class, "frontRight");
         frontLeft = lHardwareMap.get(DcMotor.class, "frontLeft");
-        backLeft = lHardwareMap.get(DcMotor.class, "backRight");
-        backRight = lHardwareMap.get(DcMotor.class, "backLeft");
-/*
+
+        backRight = lHardwareMap.get(DcMotor.class, "backRight");
+        backLeft = lHardwareMap.get(DcMotor.class, "backLeft");
+
         frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-*/
     }
 
     private  void InitializeGamepad(Gamepad Gpad)

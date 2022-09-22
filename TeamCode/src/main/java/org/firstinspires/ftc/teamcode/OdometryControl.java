@@ -45,8 +45,9 @@ public class OdometryControl {
         left = left1;
         rear = rear1;
 
-        lHardwareMap = hardwareMap;/*
+        lHardwareMap = hardwareMap;
         driveTrainCode = new DriveTrainCode(lGpad1, lHardwareMap);
+        /*
         driveTrainCode.InvertMotorDirection(Motor.frontLeft);
         driveTrainCode.InvertMotorDirection(Motor.backLeft);
         driveTrainCode.InvertMotorDirection(Motor.backRight);*/

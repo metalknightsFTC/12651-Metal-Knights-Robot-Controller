@@ -34,12 +34,9 @@ import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.DcMotor;
 @Autonomous
 public class AutoFunctions extends LinearOpMode {
-    private Blinker Expansion_Hub_1;
-    private Blinker Expansion_Hub_2;
-    private DcMotor fr;
-    private DcMotor br;
-    private DcMotor fl;
-    private DcMotor bl;
+
+    Blinker Expansion_Hub_1;
+    Blinker Expansion_Hub_2;
     private DcMotorEx right;
     private DcMotorEx left;
     private DcMotorEx rear;
@@ -53,10 +50,11 @@ public class AutoFunctions extends LinearOpMode {
     String[] motors = new String[1];
     String[] servos = new String[1];
 
-    private static final String TFOD_MODEL_ASSET =  "/sdcard/FIRST/tflitemodels/model.tflite";
+    private static final String TFOD_MODEL_ASSET =  "PowerPlay.tflite";//"/sdcard/FIRST/tflitemodels/model.tflite";
     private static final String[] LABELS = {
-            "Class 1",
-            "Class 2"
+            "1 Bolt",
+            "2 Bulb",
+            "3 Panel"
     };
     private static final String VUFORIA_KEY =
             "AWdhXNj/////AAABmRSQQCEQY0Z+t33w9GIgzFpsCMHl909n/+kfa54XDdq6fPjSi/8sBVItFQ/J/d5SoF48FrZl4Nz1zeCrwudfhFr4bfWTfh5oiLwKepThOhOYHf8V/GemTPe0+igXEu4VhznKcr3Bm5DiLe2b6zBVzvWFDWEHI/mkhLxRkU+llmwvitwodynP2arFgZ43thde9GJPCBFne/q6tPXeeN8/PoTUOtycTrnTkL6fBuHelMMnvN2RjqnMJ9SBUcaVX8DsWukq1fDr29O8bguAJU5JKxt9E3+XXiexpE/EJ9jxJc7YoMtpxfMro/e0sm9gRNckw4uPtZHnaoDjFhaK9t2D7kQQc3rwgK1OEZlY7FGQyy8g";;
@@ -80,31 +78,36 @@ public class AutoFunctions extends LinearOpMode {
 
         subSystemControl = new SubSystemControl(hardwareMap, motors, servos);
 
-        SetStartPoint();
-        OperateTensorFlow();
-        InitializeOdometry();
+        initVuforia();
+        initTfod();
+        //SetStartPoint();
+        //InitializeOdometry();
         telemetry.addData("Path Set", ", End: ", endPoint, ", Start: ", startPoint);
         telemetry.addData("Status: ", "Initialized");
         telemetry.update();
         waitForStart();
 
-        while (odometryControl.robotPosition.z < 24f) {
+        while (opModeIsActive()){
+            OperateTensorFlow();
+            /*
+            double[] deltas = odometryControl.CalculateRobotPosition();
 
-            odometryControl.SetStickPower(0f, .5f, 0f);
-            telemetry.addData("x", odometryControl.robotPosition.x);
-            telemetry.addData("z", odometryControl.robotPosition.z);
-            telemetry.addData("turn", odometryControl.robotPosition.currentHeading);
+            odometryControl.robotPosition.currentHeading += deltas[2];
+            if (deltas[2] <= .2f || deltas[2] >= -.2f)
+            {
+                odometryControl.robotPosition.x += deltas[0];
+            }
+            odometryControl.robotPosition.z += deltas[1];
+            telemetry.addData("X: ",odometryControl.robotPosition.x);
+            telemetry.addData("Z: ",odometryControl.robotPosition.z);
+            telemetry.addData("Heading: ",odometryControl.robotPosition.currentHeading);
             telemetry.update();
-
+            */
         }
-        odometryControl.SetStickPower(0f, 0f, 0f);
-
     }
 
     void OperateTensorFlow()
     {
-        initVuforia();
-        initTfod();
         if (tfod != null) {
             tfod.activate();
             tfod.setZoom(1, 16.0/9.0);
@@ -188,8 +191,8 @@ public class AutoFunctions extends LinearOpMode {
         tfodParameters.isModelTensorFlow2 = true;
         tfodParameters.inputSize = 320;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        //tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
-        tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
+        //tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
     }
 
 }
