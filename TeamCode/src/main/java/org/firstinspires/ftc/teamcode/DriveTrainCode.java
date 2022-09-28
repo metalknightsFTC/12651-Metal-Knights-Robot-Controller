@@ -20,6 +20,11 @@ public class DriveTrainCode {
     //local reference to gamepad 1 passed by ref to constructor
     private Gamepad lGpad;
     HardwareMap lHardwareMap;
+    double speed = .5;
+    float frontRightTPS;
+    float backRightTPS;
+    float frontLeftTPS;
+    float backLeftTPS;
 
     public  DriveTrainCode(Gamepad Gpad , HardwareMap hardwareMap)
     {
@@ -58,11 +63,11 @@ public class DriveTrainCode {
     private  void UpdateMecanum()
     {
 
-        frontLeft.setPower((LSY)-(RSX)-(LSX));
-        backLeft.setPower((LSY)-(RSX)+(LSX));
+        frontLeft.setPower(((LSY)-(RSX)-(LSX)) * speed);
+        backLeft.setPower(((LSY)-(RSX)+(LSX)) * speed);
 
-        frontRight.setPower((LSY)+(RSX)+(LSX));
-        backRight.setPower((LSY)+(RSX)-(LSX));
+        frontRight.setPower(((LSY)+(RSX)+(LSX)) * speed);
+        backRight.setPower(((LSY)+(RSX)-(LSX)) * speed);
 
     }
 
@@ -115,6 +120,7 @@ public class DriveTrainCode {
 
         frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }

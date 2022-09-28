@@ -10,13 +10,14 @@ public class Waypoint {
     public float zEnd;
     public float headingEnd;
 
-    public  Waypoint(float xS,float zS,float hS, float xE,float zE,float hE){
-        xStart = xS;
-        zStart = zS;
-        headingStart = hS;
-        xEnd = xE;
-        zEnd = zE;
-        headingEnd = hE;
+    float x;
+    float heading;
+    float z;
+
+    public  Waypoint(float x, float heading, float z){
+        this.x = x;
+        this.heading = heading;
+        this.z = z;
     }
 
     Vector3 GetBezierPosition(float t, Vector3 start, Vector3 end, Vector3 sFwd, Vector3 sEnd)

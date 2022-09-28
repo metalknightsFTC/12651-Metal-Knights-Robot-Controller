@@ -1,45 +1,57 @@
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.Enums.Motor;
 import org.firstinspires.ftc.teamcode.Enums.SelectedDrive;
 
 @TeleOp
 public class ProjectAluminumKnight extends LinearOpMode {
 
-    final String lift = "lifter";
-    final String grabber = "grabber";
-    SubSystemControl subSystemControl;
+    Blinker Expansion_Hub_1;
+    Blinker Expansion_Hub_2;
+    DcMotor lift;
+    Servo grabber;
+
+    DcMotorEx right;
+    DcMotorEx left;
+    DcMotorEx rear;
+
     private boolean automatics = false;
     private int targetRotations = 0;
+    OdometryControl odometryControl;
 
     @Override
     public void runOpMode(){
-        /*intake = hardwareMap.get(DcMotor.class, "intake");
-        duck = hardwareMap.get(DcMotor.class, "duck");
-        lift = hardwareMap.get(DcMotor.class, "lifter");
-        grabber = hardwareMap.get(Servo.class, "grabber");*/
-        String[] motors = new String[1];
-        String[] servos= new String[1];
+        Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
+        Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
 
-        motors[0] = lift;
-        servos[0] = grabber;
+
+        lift = hardwareMap.get(DcMotor.class,"lifter");
+        grabber = hardwareMap.get(Servo.class,"grabber");
+        right = hardwareMap.get(DcMotorEx.class,"right");
+        left = hardwareMap.get(DcMotorEx.class,"left");
+        rear = hardwareMap.get(DcMotorEx.class,"rear");
 
         DriveTrainCode driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
-        subSystemControl = new SubSystemControl(hardwareMap,motors, servos);
 
-        //driveTrainCode.InvertMotorDirection(Motor.frontRight);
-        //driveTrainCode.InvertMotorDirection(Motor.backLeft);
+        driveTrainCode.InvertMotorDirection(Motor.backLeft);
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        odometryControl = new OdometryControl(right,left,rear,hardwareMap,new Vector3(0,0,0));
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
         waitForStart();
         while (opModeIsActive()){
             driveTrainCode.UpdateDriveTrain(SelectedDrive.mecanum);
-            subSystemControl.ManipulateMotor(lift).setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            subSystemControl.ManipulateMotor(lift).setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            subSystemControl.ManipulateMotor(lift).setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            UpdatePosition();
+
             if(gamepad1.back && !automatics){
                 automatics = true;
             }else if(gamepad1.back){
@@ -47,44 +59,65 @@ public class ProjectAluminumKnight extends LinearOpMode {
                 targetRotations = 0;
             }
             if(gamepad1.left_bumper){
-                subSystemControl.ManipulateServo(grabber).setPosition(1);
+                grabber.setPosition(0);
             }else{
-                subSystemControl.ManipulateServo(grabber).setPosition(0);
+                grabber.setPosition(1);
             }
 
+            //region lifter buttons
+            //538
             if(gamepad1.a){
-                targetRotations = 58;
+                targetRotations = (int)(538 * 1.7);
             }
             if(gamepad1.x){
-                targetRotations = 144;
+                targetRotations = (int)(538 * 4.3);
             }
             if(gamepad1.y){
-                targetRotations = 288;
+                targetRotations = 3340;
             }
             if(gamepad1.b){
                 targetRotations = 0;
             }
+            //endregion
 
             telemetry.addData("AP = ", automatics);
 
+            //region lifter code
             if(automatics){
-                double liftDelta = (targetRotations - (subSystemControl.ManipulateMotor(lift).getCurrentPosition()) * .2);
-                subSystemControl.ManipulateMotor(lift).setPower(liftDelta);
-
+                //double liftDelta = (targetRotations - (lift.getCurrentPosition()) * .1);
+                lift.setTargetPosition(targetRotations);
+                lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                //lift.setPower(liftDelta);
+                lift.setPower(.75);
             }else{
+
+                lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 if(gamepad1.dpad_up)
-                    subSystemControl.ManipulateMotor(lift).setPower(0.5);
+                    lift.setPower(.75);
                 else if(gamepad1.dpad_down)
-                    subSystemControl.ManipulateMotor(lift).setPower(-0.5);
+                    lift.setPower(-.75);
                 else
-                    subSystemControl.ManipulateMotor(lift).setPower(0);
+                    lift.setPower(0);
             }
 
             telemetry.addData("Lift Target: ", ((double)targetRotations));
-            telemetry.addData("Current Lift Position: ", subSystemControl.ManipulateMotor(lift).getCurrentPosition());
+            telemetry.addData("Current Lift Position: ", lift.getCurrentPosition());
             telemetry.update();
-
+            //endregion
         }
 
     }
+
+    void  UpdatePosition(){
+        double[] deltas = odometryControl.CalculateRobotPosition();
+
+        odometryControl.robotPosition.currentHeading += deltas[2];
+        odometryControl.robotPosition.x += deltas[0];
+        odometryControl.robotPosition.z += deltas[1];
+        telemetry.addData("X: ",odometryControl.robotPosition.x);
+        telemetry.addData("Z: ",odometryControl.robotPosition.z);
+        telemetry.addData("Heading: ",odometryControl.robotPosition.currentHeading);
+        telemetry.update();
+    }
+
 }

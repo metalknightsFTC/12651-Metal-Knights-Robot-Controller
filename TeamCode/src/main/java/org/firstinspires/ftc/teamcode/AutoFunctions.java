@@ -41,14 +41,12 @@ public class AutoFunctions extends LinearOpMode {
     private DcMotorEx left;
     private DcMotorEx rear;
     OdometryControl odometryControl;
-    private EndPoint endPoint;
+    private EndPoint endPoint = EndPoint.unset;
     private StartPoint startPoint = StartPoint.UnSet;
     private SubSystemControl subSystemControl;
-    String lift = "Lift";
-    String grabber = "Grabber";
+    DcMotor lift;
+    Servo grabber;
 
-    String[] motors = new String[1];
-    String[] servos = new String[1];
 
     private static final String TFOD_MODEL_ASSET =  "PowerPlay.tflite";//"/sdcard/FIRST/tflitemodels/model.tflite";
     private static final String[] LABELS = {
@@ -65,23 +63,19 @@ public class AutoFunctions extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
+        lift = hardwareMap.get(DcMotor.class,"lifter");
+        grabber = hardwareMap.get(Servo.class,"grabber");
         Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
-        //Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub");
+        Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
 
         right = hardwareMap.get(DcMotorEx.class, "frontRight");
         left = hardwareMap.get(DcMotorEx.class, "frontLeft");
         rear = hardwareMap.get(DcMotorEx.class, "backRight");
 
-        motors[0] = lift;
-        servos[0] = grabber;
-
-        subSystemControl = new SubSystemControl(hardwareMap, motors, servos);
-
         initVuforia();
         initTfod();
-        //SetStartPoint();
-        //InitializeOdometry();
+        SetStartPoint();
+        InitializeOdometry();
         telemetry.addData("Path Set", ", End: ", endPoint, ", Start: ", startPoint);
         telemetry.addData("Status: ", "Initialized");
         telemetry.update();
@@ -89,21 +83,21 @@ public class AutoFunctions extends LinearOpMode {
 
         while (opModeIsActive()){
             OperateTensorFlow();
-            /*
-            double[] deltas = odometryControl.CalculateRobotPosition();
-
-            odometryControl.robotPosition.currentHeading += deltas[2];
-            if (deltas[2] <= .2f || deltas[2] >= -.2f)
-            {
-                odometryControl.robotPosition.x += deltas[0];
-            }
-            odometryControl.robotPosition.z += deltas[1];
-            telemetry.addData("X: ",odometryControl.robotPosition.x);
-            telemetry.addData("Z: ",odometryControl.robotPosition.z);
-            telemetry.addData("Heading: ",odometryControl.robotPosition.currentHeading);
-            telemetry.update();
-            */
+            odometryControl.MoveToPoint(new Waypoint(0,0,1));
+            UpdatePosition();
         }
+    }
+
+    void  UpdatePosition(){
+        double[] deltas = odometryControl.CalculateRobotPosition();
+
+        odometryControl.robotPosition.currentHeading += deltas[2];
+        odometryControl.robotPosition.x += deltas[0];
+        odometryControl.robotPosition.z += deltas[1];
+        telemetry.addData("X: ",odometryControl.robotPosition.x);
+        telemetry.addData("Z: ",odometryControl.robotPosition.z);
+        telemetry.addData("Heading: ",odometryControl.robotPosition.currentHeading);
+        telemetry.update();
     }
 
     void OperateTensorFlow()
@@ -122,15 +116,34 @@ public class AutoFunctions extends LinearOpMode {
                     int i = 0;
                     for (Recognition recognition : updatedRecognitions) {
                         telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                                recognition.getLeft(), recognition.getTop());
-                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                                recognition.getRight(), recognition.getBottom());
+                        CheckEndPoint(recognition.getLabel());
                         i++;
                     }
                 }
             }
         }
+    }
+
+    void CheckEndPoint(String label)
+    {
+        if(label.equals("Bolt"))
+        {
+            //position 1
+            endPoint = EndPoint.one;
+        }else if(label.equals("Bulb"))
+        {
+            //position 2
+            endPoint = EndPoint.two;
+        }else if(label.equals("Panel"))
+        {
+            //position 3
+            endPoint = EndPoint.three;
+        } else{
+            endPoint = EndPoint.unset;
+            telemetry.addData("Warning:"," No cone found");
+        }
+        telemetry.addData("endPoint", endPoint.name());
+        telemetry.update();
     }
 
     void  SetStartPoint(){
@@ -161,7 +174,7 @@ public class AutoFunctions extends LinearOpMode {
     }
 
     void InitializeOdometry(){
-        odometryControl = new OdometryControl(right, left, rear, hardwareMap, gamepad1);
+        odometryControl = new OdometryControl(right, left, rear, hardwareMap, new Vector3(0,0,0));
         telemetry.addData("Odometry Status: ", "Ready");
     }
 
@@ -194,5 +207,7 @@ public class AutoFunctions extends LinearOpMode {
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
         //tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
     }
+
+
 
 }

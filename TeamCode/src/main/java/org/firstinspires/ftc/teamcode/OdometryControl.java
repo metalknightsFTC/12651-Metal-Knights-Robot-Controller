@@ -37,24 +37,26 @@ public class OdometryControl {
     double rearEncoderRotation = 0;
 
     //region Constructor
-    public  OdometryControl(DcMotorEx right1, DcMotorEx left1, DcMotorEx rear1, HardwareMap hardwareMap, Gamepad gpad)
+    public  OdometryControl(DcMotorEx gRight, DcMotorEx gLeft, DcMotorEx gRear, HardwareMap hardwareMap, Vector3 start)
     {
-        robotPosition = new Position();
-        lGpad1 = gpad;
-        right = right1;
-        left = left1;
-        rear = rear1;
+        robotPosition = new Position(start.x,start.y,start.z);
+        right = gRight;
+        left = gLeft;
+        rear = gRear;
 
         lHardwareMap = hardwareMap;
-        driveTrainCode = new DriveTrainCode(lGpad1, lHardwareMap);
+
         /*
-        driveTrainCode.InvertMotorDirection(Motor.frontLeft);
-        driveTrainCode.InvertMotorDirection(Motor.backLeft);
+        driveTrainCode.InvertMotorDirection(Motor.frontRight);
         driveTrainCode.InvertMotorDirection(Motor.backRight);*/
 
         left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        left.setDirection(DcMotorSimple.Direction.REVERSE);
+        right.setDirection(DcMotorSimple.Direction.REVERSE);
+        rear.setDirection(DcMotorSimple.Direction.REVERSE);
 
         currentLeftEncoderRotation = left.getCurrentPosition();
         currentRightEncoderRotation = right.getCurrentPosition();
@@ -62,16 +64,12 @@ public class OdometryControl {
     }
     //endregion
 
-    public  void  MoveToPoint(Waypoint target)
+    public  Vector3  MoveToPoint(Waypoint target)
     {
-        double distToTarget = Math.sqrt((Math.pow(target.xEnd, 2) - Math.pow(robotPosition.x, 2)) +
-                (Math.pow(target.zEnd, 2) - Math.pow(robotPosition.z, 2)));
-
         float deltaX = target.xEnd - robotPosition.x;
         float deltaZ = target.zEnd - robotPosition.z;
         float deltaTheta = target.headingEnd - robotPosition.currentHeading;
-
-        SetStickPower(deltaX,deltaZ,deltaTheta);
+        return  new Vector3(deltaX, deltaTheta, deltaZ);
     }
 
     //region current position calculator algorithm
@@ -153,10 +151,5 @@ public class OdometryControl {
 
     //endregion
 
-    public void SetStickPower(float x, float z, float turn)
-    {
-        Vector3 driveDirection = new Vector3(x,turn,z);
-        driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,driveDirection);
-    }
 
 }

@@ -69,7 +69,6 @@ public class OdometryTests extends LinearOpMode {
         waitForStart();
 
         while(opModeIsActive()){
-            odometryControl.SetStickPower(0,1,0);
             double[] deltas = odometryControl.CalculateRobotPosition();
 
             odometryControl.robotPosition.currentHeading += deltas[2];
@@ -113,7 +112,7 @@ public class OdometryTests extends LinearOpMode {
     }
 
     void InitializeOdometry(){
-        odometryControl = new OdometryControl(right, left, rear, hardwareMap, gamepad1);
+        odometryControl = new OdometryControl(right, left, rear, hardwareMap, new Vector3(0,0,0));
         telemetry.addData("Odometry Status: ", "Ready");
     }
 
