@@ -66,8 +66,9 @@ public class TensorFlow extends LinearOpMode {
    */
     private static final String TFOD_MODEL_ASSET =  "/sdcard/FIRST/tflitemodels/model.tflite";
     private static final String[] LABELS = {
-      "Class 1",
-      "Class 2"
+      "sword",
+      "helmet",
+            "shield"
     };
 
     /*
