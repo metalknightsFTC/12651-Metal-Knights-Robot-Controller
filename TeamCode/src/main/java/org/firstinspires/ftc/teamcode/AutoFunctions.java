@@ -16,6 +16,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Enums.EndPoint;
+import org.firstinspires.ftc.teamcode.Enums.Motor;
+import org.firstinspires.ftc.teamcode.Enums.SelectedDrive;
 import org.firstinspires.ftc.teamcode.Enums.StartPoint;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
@@ -43,12 +45,13 @@ public class AutoFunctions extends LinearOpMode {
     OdometryControl odometryControl;
     private EndPoint endPoint = EndPoint.unset;
     private StartPoint startPoint = StartPoint.UnSet;
-    private SubSystemControl subSystemControl;
     DcMotor lift;
     Servo grabber;
 
 
-    private static final String TFOD_MODEL_ASSET =  "PowerPlay.tflite";//"/sdcard/FIRST/tflitemodels/model.tflite";
+    private static final String TFOD_MODEL_ASSET =  /*"PowerPlay.tflite";*/
+            "/sdcard/FIRST/tflitemodels/model.tflite";
+
     private static final String[] LABELS = {
             "sword",
             "helmet",
@@ -68,13 +71,22 @@ public class AutoFunctions extends LinearOpMode {
         Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
         Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
 
-        right = hardwareMap.get(DcMotorEx.class, "frontRight");
-        left = hardwareMap.get(DcMotorEx.class, "frontLeft");
-        rear = hardwareMap.get(DcMotorEx.class, "backRight");
+        right = hardwareMap.get(DcMotorEx.class, "right");
+        left = hardwareMap.get(DcMotorEx.class, "left");
+        rear = hardwareMap.get(DcMotorEx.class, "rear");
 
+        DriveTrainCode driveTrainCode = new DriveTrainCode(gamepad1 ,hardwareMap);
+
+        driveTrainCode.InvertMotorDirection(Motor.frontLeft);
+        driveTrainCode.InvertMotorDirection(Motor.backRight);
+        driveTrainCode.InvertMotorDirection(Motor.frontRight);
+
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         initVuforia();
         initTfod();
-        SetStartPoint();
+        //SetStartPoint();
         InitializeOdometry();
         telemetry.addData("Path Set", ", End: ", endPoint, ", Start: ", startPoint);
         telemetry.addData("Status: ", "Initialized");
@@ -83,13 +95,24 @@ public class AutoFunctions extends LinearOpMode {
 
         while (opModeIsActive()){
             OperateTensorFlow();
-            odometryControl.MoveToPoint(new Waypoint(0,0,1));
+/*
+            telemetry.addData("fr",driveTrainCode.frontRightTPS);
+            telemetry.addData("br",driveTrainCode.backRightTPS);
+
+            telemetry.addData("fl",driveTrainCode.frontLeftTPS);
+            telemetry.addData("bl",driveTrainCode.backLeftTPS);
+*/
             UpdatePosition();
+            //driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,.2f,0));
         }
     }
 
     void  UpdatePosition(){
         double[] deltas = odometryControl.CalculateRobotPosition();
+
+        telemetry.addData("Right: ",right.getCurrentPosition());
+        telemetry.addData("Left",left.getCurrentPosition());
+        telemetry.addData("rear", rear.getCurrentPosition());
 
         odometryControl.robotPosition.currentHeading += deltas[2];
         odometryControl.robotPosition.x += deltas[0];
@@ -174,7 +197,7 @@ public class AutoFunctions extends LinearOpMode {
     }
 
     void InitializeOdometry(){
-        odometryControl = new OdometryControl(right, left, rear, hardwareMap, new Vector3(0,0,0));
+        odometryControl = new OdometryControl(right, left, rear, new Vector3(0,0,0));
         telemetry.addData("Odometry Status: ", "Ready");
     }
 
@@ -204,8 +227,8 @@ public class AutoFunctions extends LinearOpMode {
         tfodParameters.isModelTensorFlow2 = true;
         tfodParameters.inputSize = 320;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
-        //tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
+        //tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
+        tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
     }
 
 

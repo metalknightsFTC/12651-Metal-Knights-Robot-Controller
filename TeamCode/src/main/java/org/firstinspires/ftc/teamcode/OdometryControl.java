@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -8,20 +9,15 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.Enums.Motor;
 import org.firstinspires.ftc.teamcode.Enums.SelectedDrive;
-//import com.qualcomm.robotcore.util.Hardware;
-
 public class OdometryControl {
 
-    float omniBaseWidth = 9.7f; //266.7f mm 10.5in
-    float omniBaseLength = 3.65f; //114.3f mm 4.5in
+    float omniBaseWidth = 8.5f; //266.7f mm 10.5in
+    float omniBaseLength = 6.5f; //114.3f mm 4.5in
     //229mm tolerance
     float diameter = 1.96f; //50mm 1.96in
     int cpr = 8192;
-    double c = (float) (2 * Math.PI) * (diameter / 2);//6.1575216
-    Gamepad lGpad1;
-    HardwareMap lHardwareMap;
+    double c = (float) 6.1575216;//(Math.PI) * (diameter / 2);//6.1575216
     Position robotPosition;
-    DriveTrainCode driveTrainCode;
 
     DcMotorEx right;
     DcMotorEx left;
@@ -37,25 +33,21 @@ public class OdometryControl {
     double rearEncoderRotation = 0;
 
     //region Constructor
-    public  OdometryControl(DcMotorEx gRight, DcMotorEx gLeft, DcMotorEx gRear, HardwareMap hardwareMap, Vector3 start)
+    public  OdometryControl(DcMotorEx gRight, DcMotorEx gLeft, DcMotorEx gRear,Vector3 start)
     {
         robotPosition = new Position(start.x,start.y,start.z);
+
         right = gRight;
         left = gLeft;
         rear = gRear;
-
-        lHardwareMap = hardwareMap;
-
-        /*
-        driveTrainCode.InvertMotorDirection(Motor.frontRight);
-        driveTrainCode.InvertMotorDirection(Motor.backRight);*/
 
         left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        left.setDirection(DcMotorSimple.Direction.REVERSE);
+        //left.setDirection(DcMotorSimple.Direction.REVERSE);
         right.setDirection(DcMotorSimple.Direction.REVERSE);
+
         rear.setDirection(DcMotorSimple.Direction.REVERSE);
 
         currentLeftEncoderRotation = left.getCurrentPosition();
@@ -101,11 +93,13 @@ public class OdometryControl {
         deltaX = (((deltaBack * c) * Math.cos(heading)) + ((((deltaLeft * c) * Math.sin(heading))
                         + ((deltaRight * c) * Math.sin(heading))) / 2f));
 
-        deltaTheta = ((c * (deltaRight - deltaLeft)) / omniBaseWidth)*(180/Math.PI);
+        deltaTheta = ((c * (deltaLeft - deltaRight)) / omniBaseWidth)*(180/Math.PI);
 
-        if(deltaTheta <= 0.1 || deltaTheta >= -0.1)
-        {
-            deltaX = 0;
+        if (robotPosition.currentHeading > 360){
+            robotPosition.currentHeading -= 360;
+        }
+        if (robotPosition.currentHeading < 0){
+            robotPosition.currentHeading += 360;
         }
 
         return new double[] {deltaX,deltaZ,deltaTheta};

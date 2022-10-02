@@ -43,13 +43,13 @@ public class ProjectAluminumKnight extends LinearOpMode {
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        odometryControl = new OdometryControl(right,left,rear,hardwareMap,new Vector3(0,0,0));
+        odometryControl = new OdometryControl(right,left,rear,new Vector3(0,0,0));
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
         waitForStart();
         while (opModeIsActive()){
-            driveTrainCode.UpdateDriveTrain(SelectedDrive.mecanum);
+            driveTrainCode.UpdateDriveTrain(SelectedDrive.mecanum,.5f);
             UpdatePosition();
 
             if(gamepad1.back && !automatics){
@@ -61,7 +61,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
             if(gamepad1.left_bumper){
                 grabber.setPosition(0);
             }else{
-                grabber.setPosition(1);
+                grabber.setPosition(.35);
             }
 
             //region lifter buttons
@@ -108,8 +108,13 @@ public class ProjectAluminumKnight extends LinearOpMode {
 
     }
 
-    void  UpdatePosition(){
+    void  UpdatePosition()
+    {
         double[] deltas = odometryControl.CalculateRobotPosition();
+
+        telemetry.addData("Right: ",right.getCurrentPosition());
+        telemetry.addData("Left",left.getCurrentPosition());
+        telemetry.addData("rear", rear.getCurrentPosition());
 
         odometryControl.robotPosition.currentHeading += deltas[2];
         odometryControl.robotPosition.x += deltas[0];
@@ -117,7 +122,6 @@ public class ProjectAluminumKnight extends LinearOpMode {
         telemetry.addData("X: ",odometryControl.robotPosition.x);
         telemetry.addData("Z: ",odometryControl.robotPosition.z);
         telemetry.addData("Heading: ",odometryControl.robotPosition.currentHeading);
-        telemetry.update();
     }
 
 }
