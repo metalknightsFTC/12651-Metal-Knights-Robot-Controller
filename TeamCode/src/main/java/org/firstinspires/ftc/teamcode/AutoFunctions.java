@@ -1,5 +1,5 @@
 package org.firstinspires.ftc.teamcode;
-
+import java.io.File;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
@@ -31,6 +31,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,16 +52,15 @@ public class AutoFunctions extends LinearOpMode {
     private StartPoint startPoint = StartPoint.UnSet;
     DcMotor lift;
     Servo grabber;
-
-
+    File test;
     @SuppressLint("SdCardPath")
     private static final String TFOD_MODEL_ASSET =  /*"PowerPlay.tflite";*/
             "/sdcard/FIRST/tflitemodels/model.tflite";
 
     private static final String[] LABELS = {
-            "1 sword",
-            "2 helmet",
-            "3 shield"
+            "shield",
+            "helmet",
+            "sword"
     };
     private static final String VUFORIA_KEY =
             "AWdhXNj/////AAABmRSQQCEQY0Z+t33w9GIgzFpsCMHl909n/+kfa54XDdq6fPjSi/8sBVItFQ/J/d5SoF48FrZl4Nz1zeCrwudfhFr4bfWTfh5oiLwKepThOhOYHf8V/GemTPe0+igXEu4VhznKcr3Bm5DiLe2b6zBVzvWFDWEHI/mkhLxRkU+llmwvitwodynP2arFgZ43thde9GJPCBFne/q6tPXeeN8/PoTUOtycTrnTkL6fBuHelMMnvN2RjqnMJ9SBUcaVX8DsWukq1fDr29O8bguAJU5JKxt9E3+XXiexpE/EJ9jxJc7YoMtpxfMro/e0sm9gRNckw4uPtZHnaoDjFhaK9t2D7kQQc3rwgK1OEZlY7FGQyy8g";;
@@ -98,6 +100,20 @@ public class AutoFunctions extends LinearOpMode {
 
         while (opModeIsActive()){
             OperateTensorFlow();
+            telemetry.update();
+            /*
+            try {
+                test = new File("/sdcard/FIRST/tflitemodels");
+                File[] files = test.listFiles();
+                for (File file:files)
+                {
+                    telemetry.addData("file: ", file.getCanonicalPath());
+                }
+                telemetry.update();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            */
 /*
             telemetry.addData("fr",driveTrainCode.frontRightTPS);
             telemetry.addData("br",driveTrainCode.backRightTPS);
@@ -105,7 +121,7 @@ public class AutoFunctions extends LinearOpMode {
             telemetry.addData("fl",driveTrainCode.frontLeftTPS);
             telemetry.addData("bl",driveTrainCode.backLeftTPS);
 */
-            UpdatePosition();
+            //UpdatePosition();
             //driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,.2f,0));
         }
     }
@@ -142,7 +158,7 @@ public class AutoFunctions extends LinearOpMode {
                     int i = 0;
                     for (Recognition recognition : updatedRecognitions) {
                         telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                        CheckEndPoint(recognition.getLabel());
+                        //CheckEndPoint(recognition.getLabel());
                         i++;
                     }
                 }
