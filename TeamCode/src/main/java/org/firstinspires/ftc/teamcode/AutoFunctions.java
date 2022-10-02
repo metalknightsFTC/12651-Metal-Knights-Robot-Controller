@@ -22,6 +22,8 @@ import org.firstinspires.ftc.teamcode.Enums.StartPoint;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.ColorSensor;
+
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Blinker;
@@ -49,13 +51,14 @@ public class AutoFunctions extends LinearOpMode {
     Servo grabber;
 
 
+    @SuppressLint("SdCardPath")
     private static final String TFOD_MODEL_ASSET =  /*"PowerPlay.tflite";*/
             "/sdcard/FIRST/tflitemodels/model.tflite";
 
     private static final String[] LABELS = {
-            "sword",
-            "helmet",
-            "shield"
+            "1 sword",
+            "2 helmet",
+            "3 shield"
     };
     private static final String VUFORIA_KEY =
             "AWdhXNj/////AAABmRSQQCEQY0Z+t33w9GIgzFpsCMHl909n/+kfa54XDdq6fPjSi/8sBVItFQ/J/d5SoF48FrZl4Nz1zeCrwudfhFr4bfWTfh5oiLwKepThOhOYHf8V/GemTPe0+igXEu4VhznKcr3Bm5DiLe2b6zBVzvWFDWEHI/mkhLxRkU+llmwvitwodynP2arFgZ43thde9GJPCBFne/q6tPXeeN8/PoTUOtycTrnTkL6fBuHelMMnvN2RjqnMJ9SBUcaVX8DsWukq1fDr29O8bguAJU5JKxt9E3+XXiexpE/EJ9jxJc7YoMtpxfMro/e0sm9gRNckw4uPtZHnaoDjFhaK9t2D7kQQc3rwgK1OEZlY7FGQyy8g";;
