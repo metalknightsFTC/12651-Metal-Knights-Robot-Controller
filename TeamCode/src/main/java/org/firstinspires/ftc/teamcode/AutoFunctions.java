@@ -53,6 +53,14 @@ public class AutoFunctions extends LinearOpMode {
     DcMotor lift;
     Servo grabber;
     File test;
+    DriveTrainCode driveTrainCode;
+    int routine = 0;
+    boolean routineComplete = false;
+
+    double xInit;
+    double tInit;
+    double zInit;
+
     @SuppressLint("SdCardPath")
     private static final String TFOD_MODEL_ASSET =  /*"PowerPlay.tflite";*/
             "/sdcard/FIRST/tflitemodels/model.tflite";
@@ -80,7 +88,7 @@ public class AutoFunctions extends LinearOpMode {
         left = hardwareMap.get(DcMotorEx.class, "left");
         rear = hardwareMap.get(DcMotorEx.class, "rear");
 
-        DriveTrainCode driveTrainCode = new DriveTrainCode(gamepad1 ,hardwareMap);
+        driveTrainCode = new DriveTrainCode(gamepad1 ,hardwareMap);
 
         driveTrainCode.InvertMotorDirection(Motor.frontLeft);
         driveTrainCode.InvertMotorDirection(Motor.backRight);
@@ -89,42 +97,318 @@ public class AutoFunctions extends LinearOpMode {
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        SetStartPoint();
         initVuforia();
         initTfod();
-        //SetStartPoint();
+
         InitializeOdometry();
+        xInit = odometryControl.robotPosition.x;
+        tInit = odometryControl.robotPosition.currentHeading;
+        zInit = odometryControl.robotPosition.z;
         telemetry.addData("Path Set", ", End: ", endPoint, ", Start: ", startPoint);
         telemetry.addData("Status: ", "Initialized");
         telemetry.update();
         waitForStart();
 
-        while (opModeIsActive()){
-            OperateTensorFlow();
-            telemetry.update();
-            /*
-            try {
-                test = new File("/sdcard/FIRST/tflitemodels");
-                File[] files = test.listFiles();
-                for (File file:files)
-                {
-                    telemetry.addData("file: ", file.getCanonicalPath());
-                }
-                telemetry.update();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            */
-/*
-            telemetry.addData("fr",driveTrainCode.frontRightTPS);
-            telemetry.addData("br",driveTrainCode.backRightTPS);
 
-            telemetry.addData("fl",driveTrainCode.frontLeftTPS);
-            telemetry.addData("bl",driveTrainCode.backLeftTPS);
-*/
-            //UpdatePosition();
-            //driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,.2f,0));
+        OperateTensorFlow();
+        UpdatePosition();
+
+        SetRoutine();
+        //end state as an integer value
+        /*
+        case 0 = red left 1
+        case 1 = red left 2
+        case 2 = red left 3
+
+        case 3 = red right 1
+        case 4 = red right 2
+        case 5 = red right 3
+
+        case 6 = blue left 1
+        case 7 = blue left 2
+        case 8 = blue left 3
+
+        case 9 = blue right 1
+        case 10 = blue right 2
+        case 11 = blue right 3
+         */
+
+        //all things are done on x,z coordinate system with heading being in degrees
+        RunRoutine();
+    }
+
+    public void  UpdateInit(){
+        xInit = odometryControl.robotPosition.x;
+        tInit = odometryControl.robotPosition.currentHeading;
+        zInit = odometryControl.robotPosition.z;
+    }
+
+    //region From start to end position
+    void  RunRoutine() {
+        UpdateInit();
+        switch (routine) {
+            case 0:
+                //z+1square
+                //x+1square
+                while (odometryControl.robotPosition.z <= zInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                routineComplete = true;
+            case 1:
+                //z+1
+                //x+2
+                //z-1
+                while (odometryControl.robotPosition.z <= zInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit + 2){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.z <= zInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                routineComplete = true;
+            case 2:
+                //z-1
+                //x+1
+                while (odometryControl.robotPosition.z <= zInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+            case 3:
+                //z+1square
+                //x+1square
+                while (odometryControl.robotPosition.z <= zInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                routineComplete = true;
+            case 4:
+                //z+1
+                //x+2
+                //z-1
+                while (odometryControl.robotPosition.z <= zInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit + 2){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.z <= zInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                routineComplete = true;
+            case 5:
+                //z-1
+                //x+1
+                while (odometryControl.robotPosition.z <= zInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                routineComplete = true;
+            case 6:
+                //z-1
+                //x-1
+                while (odometryControl.robotPosition.z <= zInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                routineComplete = true;
+            case 7:
+                //z-1
+                //x-2
+                //z+1
+                while (odometryControl.robotPosition.z <= zInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit - 2){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.z <= zInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                routineComplete = true;
+            case 8:
+                //z+1
+                //x-1
+                while (odometryControl.robotPosition.z <= zInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                routineComplete = true;
+            case 9:
+                //z-1
+                //x-1
+                while (odometryControl.robotPosition.z <= zInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                routineComplete = true;
+            case 10:
+                //z-1
+                //x-2
+                //z+1
+                while (odometryControl.robotPosition.z <= zInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit - 2){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.z <= zInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                routineComplete = true;
+            case 11:
+                //z+1
+                //x-1
+                while (odometryControl.robotPosition.z <= zInit + 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                }
+                UpdateInit();
+                while (odometryControl.robotPosition.x <= xInit - 1){
+                    UpdatePosition();
+                    driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                }
+                routineComplete = true;
+            case 12:
+                return;
+            default:
+
+        }
+
+    }
+    //endregion
+
+    //region Set the routine to run
+    void  SetRoutine(){
+        switch (startPoint){
+
+            case redLeft:
+                switch (endPoint){
+                    case one:
+                        routine = 0;
+                        break;
+                    case two:
+                        routine = 1;
+                        break;
+                    case three:
+                        routine = 2;
+                        break;
+                    case unset:
+                        routine = 12;
+                        break;
+                }
+                break;
+            case redRight:
+                switch (endPoint){
+                    case one:
+                        routine = 3;
+                        break;
+                    case two:
+                        routine = 4;
+                        break;
+                    case three:
+                        routine = 5;
+                        break;
+                    case unset:
+                        routine = 12;
+                        break;
+                }
+                break;
+            case blueLeft:
+                switch (endPoint){
+                    case one:
+                        routine = 6;
+                        break;
+                    case two:
+                        routine = 7;
+                        break;
+                    case three:
+                        routine = 8;
+                        break;
+                    case unset:
+                        routine = 12;
+                        break;
+                }
+                break;
+            case blueRight:
+                switch (endPoint){
+                    case one:
+                        routine = 9;
+                        break;
+                    case two:
+                        routine = 10;
+                        break;
+                    case three:
+                        routine = 11;
+                        break;
+                    case unset:
+                        routine = 12;
+                        break;
+                }
+                break;
+            case UnSet:
+                break;
         }
     }
+    //endregion
 
     void  UpdatePosition(){
         double[] deltas = odometryControl.CalculateRobotPosition();
@@ -158,7 +442,7 @@ public class AutoFunctions extends LinearOpMode {
                     int i = 0;
                     for (Recognition recognition : updatedRecognitions) {
                         telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                        //CheckEndPoint(recognition.getLabel());
+                        CheckEndPoint(recognition.getLabel());
                         i++;
                     }
                 }
@@ -168,24 +452,24 @@ public class AutoFunctions extends LinearOpMode {
 
     void CheckEndPoint(String label)
     {
-        if(label.equals("Bolt"))
-        {
-            //position 1
-            endPoint = EndPoint.one;
-        }else if(label.equals("Bulb"))
-        {
-            //position 2
-            endPoint = EndPoint.two;
-        }else if(label.equals("Panel"))
-        {
-            //position 3
-            endPoint = EndPoint.three;
-        } else{
-            endPoint = EndPoint.unset;
-            telemetry.addData("Warning:"," No cone found");
+        switch (label) {
+            case "sword":
+                //position 1
+                endPoint = EndPoint.one;
+                break;
+            case "helmet":
+                //position 2
+                endPoint = EndPoint.two;
+                break;
+            case "shield":
+                //position 3
+                endPoint = EndPoint.three;
+                break;
+            default:
+                endPoint = EndPoint.unset;
+                return;
         }
         telemetry.addData("endPoint", endPoint.name());
-        telemetry.update();
     }
 
     void  SetStartPoint(){
@@ -247,7 +531,13 @@ public class AutoFunctions extends LinearOpMode {
         tfodParameters.inputSize = 320;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         //tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
-        tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
+        try {
+            tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
+        }catch (Exception e){
+            telemetry.addData("CV Status: ","RED NO MODEL FOUND");
+            telemetry.update();
+        }
+        telemetry.addData("CV Status: ","GREEN");
     }
 
 
