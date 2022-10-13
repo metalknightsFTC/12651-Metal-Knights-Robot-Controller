@@ -32,10 +32,10 @@ public class Vector3 {
         return  this;
     }
 
-    public  Vector3 Multiply(float multiplyer){
-        x *= multiplyer;
-        y *= multiplyer;
-        z *= multiplyer;
+    public  Vector3 Multiply(float multiplier){
+        x *= multiplier;
+        y *= multiplier;
+        z *= multiplier;
         return this;
     }
 

@@ -21,7 +21,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous
 public class AutoFunctions extends LinearOpMode {
-    //39.3701 Inches per Meter
+
     Blinker Expansion_Hub_1;
     Blinker Expansion_Hub_2;
     private DcMotorEx right;
@@ -32,10 +32,11 @@ public class AutoFunctions extends LinearOpMode {
     DcMotor lift;
     Servo grabber;
     DriveTrainCode driveTrainCode;
+
     int routine = 0;
 
     int cpr = 8192;
-    double c = (float) 6.1575216;//(Math.PI) * (diameter / 2);//6.1575216
+    double c = 6.1575216;//(Math.PI) * (diameter / 2);//6.1575216
 
     double currentLeftEncoderRotation = 0;
     double currentRightEncoderRotation = 0;
@@ -58,66 +59,14 @@ public class AutoFunctions extends LinearOpMode {
 
     private TFObjectDetector tfod;
 
-
     @Override
-    public void runOpMode() {
-        lift = hardwareMap.get(DcMotor.class,"lifter");
-        grabber = hardwareMap.get(Servo.class,"grabber");
-        Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
-        Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
-
-        right = hardwareMap.get(DcMotorEx.class, "right");
-        left = hardwareMap.get(DcMotorEx.class, "left");
-        rear = hardwareMap.get(DcMotorEx.class, "rear");
-
-        driveTrainCode = new DriveTrainCode(gamepad1 ,hardwareMap);
-
-        driveTrainCode.InvertMotorDirection(Motor.frontLeft);
-        driveTrainCode.InvertMotorDirection(Motor.backRight);
-        driveTrainCode.InvertMotorDirection(Motor.frontRight);
-
-        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lift.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        SetStartPoint();
-        initVuforia();
-        initTfod();
-
-        telemetry.addData("Path Set ", "Start: ", startPoint.name());
-        telemetry.addData("Status: ", "Initialized");
-        telemetry.update();
-
-        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        right.setDirection(DcMotorSimple.Direction.REVERSE);
-        rear.setDirection(DcMotorSimple.Direction.REVERSE);
-
+    public void runOpMode()
+    {
+        Initialize();
         waitForStart();
-        while (!OperateTensorFlow()){
-            telemetry.addData("Scanning",".");
-            telemetry.update();
-            if(OperateTensorFlow())
-                break;
-            telemetry.addData("Scanning","..");
-            telemetry.update();
-            if(OperateTensorFlow())
-                break;
-            telemetry.addData("Scanning","...");
-            telemetry.update();
-            if(OperateTensorFlow())
-                break;
-            telemetry.addData("Scanning","....");
-            telemetry.update();
-            if(OperateTensorFlow())
-                break;
-            telemetry.addData("Scanning",".....");
-            telemetry.update();
-        }
-        SetRoutine();
+        SetLiftTarget(-1);
+        CloseClaw();
+        CheckForModel();
         //region end state as an integer value
         /*
         case 0 = red left 1
@@ -137,19 +86,8 @@ public class AutoFunctions extends LinearOpMode {
         case 11 = blue right 3
          */
         //endregion
-
-        //all things are done on x,z coordinate system with heading being in degrees
-        SetLiftTarget(-1);
-        CloseClaw();
+        SetRoutine();
         RunRoutine();
-    }
-
-    void OpenClaw(){
-        grabber.setPosition(.22f);
-    }
-
-    void CloseClaw(){
-        grabber.setPosition(.35f);
     }
 
     //region From start to end position
@@ -201,27 +139,110 @@ public class AutoFunctions extends LinearOpMode {
                 //drop cone
                 OpenClaw();
                 sleep(1000);
-                //move back off of junction
+                //move back off of junction9
                 Move(0f,-3f,0f,.3f);
                 //lower
                 SetLiftTarget(-1);
-                Move(0,0f,-3.91f,.45f);
+                Move(0,0f,-3.92f,.45f);
+                //strafe into position
+                Move(-1f,0f,0f,.4f);
+                Move(0,1.8f,0,.4f);
                 //move to position 2
                 Move(20,0f,0f,.5f);
                 //endregion
                 break;
             case 2:
                 //region Case 2 Shield code
-                Move(1.5f,0f,0f,.5f);
-                Move(0f,0f,-19f,.5f);
-                Move(21,0f,0f,.5f);
+                //pushback from wall
+                Move(1.5f,0f,0f,.3f);
+                //turn to junction
+                Move(0,0f,1.93f,.45f);
+                //lift
+                SetLiftTarget(0);
+                //wait to lift
+                sleep(1000);
+                //drive to the junction
+                Move(0f,9f,0f,.3f);
+                //wait a bit to be sure
+                sleep(200);
+                //drop cone
+                OpenClaw();
+                sleep(200);
+                //move back off of junction
+                Move(0f,-3f,0f,.3f);
+                //lower
+                SetLiftTarget(-1);
+                Move(0,0f,-3.92f,.45f);
+                //strafe into position
+                Move(-.5f,0f,0f,.4f);
+
+                Move(0,-22f,0,.45f);
+                Move(20f,0,0,.45f);
+
                 //endregion
                 break;
             case 3:
+                //pull off of wall
+                Move(1.5f,0,0,.3f);
+                //drive to the entrypoint
+                Move(0,20,0,.45f);
+                //Lift
+                SetLiftTarget(2);
+                //Drive to High junction
+                Move(24f,0,0,.45f);
+                //drive on top of high Junction
+                Move(0,4,0,.45f);
+                //drop cone
+                OpenClaw();
+                //move off of junction
+                Move(0,-4,0,.45f);
+                //lower lift
+                SetLiftTarget(-1);
+                CloseClaw();
                 break;
             case 4:
+                //pull off of wall
+                Move(1.5f,0,0,.3f);
+                //drive to the entrypoint
+                Move(0,20,0,.45f);
+                //Lift
+                SetLiftTarget(2);
+                //Drive to High junction
+                Move(24f,0,0,.45f);
+                //drive on top of high Junction
+                Move(0,4,0,.45f);
+                //drop cone
+                OpenClaw();
+                //move off of junction
+                Move(0,-4,0,.45f);
+                //lower lift
+                SetLiftTarget(-1);
+                CloseClaw();
+                //drive to position 2
+                Move(6,0,0,.45f);
+                Move(0,-20,0,.45f);
                 break;
             case 5:
+                //pull off of wall
+                Move(1.5f,0,0,.3f);
+                //drive to the entrypoint
+                Move(0,20,0,.45f);
+                //Lift
+                SetLiftTarget(2);
+                //Drive to High junction
+                Move(24f,0,0,.45f);
+                //drive on top of high Junction
+                Move(0,4,0,.45f);
+                //drop cone
+                OpenClaw();
+                //move off of junction
+                Move(0,-4,0,.45f);
+                //lower lift
+                SetLiftTarget(-1);
+                CloseClaw();
+                //drive to position 2
+                Move(6,0,0,.45f);
+                Move(0,-40,0,.45f);
                 break;
             default:
                 break;
@@ -357,7 +378,7 @@ public class AutoFunctions extends LinearOpMode {
 
                 telemetry.addData("X ", totalMovementX);
                 telemetry.update();
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous, new Vector3(speed, 0, 0));
+                driveTrainCode.UpdateDriveTrain(new Vector3(speed, 0, 0));
             }
         }
         if(X < 0 && Z == 0) {
@@ -379,7 +400,7 @@ public class AutoFunctions extends LinearOpMode {
 
                 telemetry.addData("X: ", totalMovementX);
                 telemetry.update();
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous, new Vector3(-speed, 0, 0));
+                driveTrainCode.UpdateDriveTrain(new Vector3(-speed, 0, 0));
             }
         }
         //endregion
@@ -404,7 +425,7 @@ public class AutoFunctions extends LinearOpMode {
 
                 telemetry.addData("Z: ", totalMovementZ);
                 telemetry.update();
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous, new Vector3(0, 0, speed));
+                driveTrainCode.UpdateDriveTrain(new Vector3(0, 0, speed));
             }
         }
         if(X == 0 && Z < 0) {
@@ -426,7 +447,7 @@ public class AutoFunctions extends LinearOpMode {
 
                 telemetry.addData("Z: ", totalMovementZ);
                 telemetry.update();
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous, new Vector3(0, 0, -speed));
+                driveTrainCode.UpdateDriveTrain(new Vector3(0, 0, -speed));
             }
         }
         //endregion
@@ -453,7 +474,7 @@ public class AutoFunctions extends LinearOpMode {
                 t += (deltaLeft - deltaRight);
                 telemetry.addData("Turn: ", t);
                 telemetry.update();
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous, new Vector3(0, speed, 0));
+                driveTrainCode.UpdateDriveTrain(new Vector3(0, speed, 0));
             }
         }
 
@@ -477,12 +498,12 @@ public class AutoFunctions extends LinearOpMode {
                 t += (deltaLeft - deltaRight)/2;
                 telemetry.addData("Turn: ", t);
                 telemetry.update();
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous, new Vector3(0, -speed, 0));
+                driveTrainCode.UpdateDriveTrain(new Vector3(0, -speed, 0));
             }
         }
 
         //endregion
-        driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,0));
+        driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
     }
 
     boolean OperateTensorFlow()
@@ -545,26 +566,39 @@ public class AutoFunctions extends LinearOpMode {
             //telemetry.addData("Y: ","Blue Side Left");
             //telemetry.addData("B: ","Blue Side Right");
             telemetry.update();
-            if (gamepad1.a){
+            if (gamepad1.a)
+            {
                 startPoint = StartPoint.redLeft;
                 return;
             }
-            if (gamepad1.x){
+            if (gamepad1.x)
+            {
                 startPoint = StartPoint.redRight;
                 return;
-            }/*
-            if (gamepad1.y){
+            }
+            /*
+            if (gamepad1.y)
+            {
                 startPoint = StartPoint.blueLeft;
                 return;
             }
-            if (gamepad1.b){
+            if (gamepad1.b)
+            {
                 startPoint = StartPoint.blueRight;
                 return;
             }*/
         }
     }
 
-    private void initVuforia() {
+    private void OpenClaw(){
+        grabber.setPosition(.22f);
+    }
+
+    private void CloseClaw(){
+        grabber.setPosition(.35f);
+    }
+
+    private void InitVuforia() {
 
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
@@ -574,7 +608,7 @@ public class AutoFunctions extends LinearOpMode {
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
     }
 
-    private void initTfod() {
+    private void InitTfod() {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
@@ -590,4 +624,69 @@ public class AutoFunctions extends LinearOpMode {
         }
         telemetry.addData("CV Status: ","GREEN");
     }
+
+    private void Initialize(){
+        lift = hardwareMap.get(DcMotor.class,"lifter");
+        grabber = hardwareMap.get(Servo.class,"grabber");
+        Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
+        Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
+
+        right = hardwareMap.get(DcMotorEx.class, "right");
+        left = hardwareMap.get(DcMotorEx.class, "left");
+        rear = hardwareMap.get(DcMotorEx.class, "rear");
+
+        driveTrainCode = new DriveTrainCode(gamepad1 ,hardwareMap);
+
+        driveTrainCode.InvertMotorDirection(Motor.frontLeft);
+        driveTrainCode.InvertMotorDirection(Motor.backRight);
+        driveTrainCode.InvertMotorDirection(Motor.frontRight);
+
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        lift.setDirection(DcMotorSimple.Direction.REVERSE);
+
+
+        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        right.setDirection(DcMotorSimple.Direction.REVERSE);
+        rear.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        SetStartPoint();
+        InitVuforia();
+        InitTfod();
+
+
+        telemetry.addData("Path Set ", "Start: ", startPoint.name());
+        telemetry.addData("Status: ", "Initialized");
+        telemetry.update();
+
+    }
+
+
+    private void CheckForModel(){
+        while (!OperateTensorFlow()){
+            telemetry.addData("Scanning",".");
+            telemetry.update();
+            if(OperateTensorFlow())
+                return;
+            telemetry.addData("Scanning","..");
+            telemetry.update();
+            if(OperateTensorFlow())
+                return;
+            telemetry.addData("Scanning","...");
+            telemetry.update();
+            if(OperateTensorFlow())
+                return;
+            telemetry.addData("Scanning","....");
+            telemetry.update();
+            if(OperateTensorFlow())
+                return;
+            telemetry.addData("Scanning",".....");
+            telemetry.update();
+        }
+    }
+
 }

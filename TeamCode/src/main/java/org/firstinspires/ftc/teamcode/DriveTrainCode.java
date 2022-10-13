@@ -21,40 +21,26 @@ public class DriveTrainCode {
     private Gamepad lGpad;
     HardwareMap lHardwareMap;
     //double speed = 1;
-    public float frontRightTPS;
-    public float backRightTPS;
-    public float frontLeftTPS;
-    public float backLeftTPS;
+    public float frTicks;
+    public float brTicks;
+    public float flTicks;
+    public float blTicks;
 
-    public  DriveTrainCode(Gamepad Gpad , HardwareMap hardwareMap)
+    public  DriveTrainCode(Gamepad gamepad , HardwareMap hardwareMap)
     {
-        InitializeGamepad(Gpad);
+        InitializeGamepad(gamepad);
         InitializeHardware(hardwareMap);
     }
 
-    public void  UpdateDriveTrain(SelectedDrive driveType,float speed)
+    public void  UpdateDriveTrain(float speed)
     {
         UpdateInput();
-        if (driveType == SelectedDrive.mecanum){
-            UpdateMecanum(speed);
-        }else if (driveType == SelectedDrive.tank){
-            UpdateTank();
-        }else if (driveType == SelectedDrive.autonomous){
-            SimulateStick(0,0,0);
-        }
+        UpdateMecanum(speed);
     }
 
-    public void  UpdateDriveTrain(SelectedDrive driveType,Vector3 direction)
+    public void  UpdateDriveTrain(Vector3 direction)
     {
-        UpdateInput();
-
-        if (driveType == SelectedDrive.tank)
-        {
-            UpdateTank();
-        } else if (driveType == SelectedDrive.autonomous)
-        {
-            SimulateStick(direction.x,direction.z,direction.y);
-        }
+        SimulateStick(direction.x,direction.z,direction.y);
     }
 
 
@@ -101,19 +87,11 @@ public class DriveTrainCode {
         frontRight.setPower(((y)-(t)-(x)));
         backRight.setPower(((y)-(t)+(x)));
 
-        frontRightTPS = frontRight.getCurrentPosition();
-        backRightTPS = backRight.getCurrentPosition();
+        frTicks = frontRight.getCurrentPosition();
+        brTicks = backRight.getCurrentPosition();
 
-        frontLeftTPS = frontLeft.getCurrentPosition();
-        backLeftTPS = backLeft.getCurrentPosition();
-    }
-
-    private  void  UpdateTank()
-    {
-        frontLeft.setPower(LSY-RSX);
-        backLeft.setPower((LSY)-(RSX));
-        frontRight.setPower((LSY)+(RSX));
-        backRight.setPower((LSY)+(RSX));
+        flTicks = frontLeft.getCurrentPosition();
+        blTicks = backLeft.getCurrentPosition();
     }
 
     private void UpdateInput()
@@ -137,9 +115,9 @@ public class DriveTrainCode {
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
-    private  void InitializeGamepad(Gamepad Gpad)
+    private  void InitializeGamepad(Gamepad gpad)
     {
-        lGpad = Gpad;
+        lGpad = gpad;
     }
 
 }

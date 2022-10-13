@@ -5,7 +5,10 @@ import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.BatteryChecker;
 
 import org.firstinspires.ftc.teamcode.Enums.Motor;
 import org.firstinspires.ftc.teamcode.Enums.SelectedDrive;
@@ -18,12 +21,13 @@ public class ProjectAluminumKnight extends LinearOpMode {
     DcMotor lift;
     Servo grabber;
 
+    DriveTrainCode driveTrainCode;
+
     DcMotorEx right;
     DcMotorEx left;
     DcMotorEx rear;
     private boolean automatics = false;
     private int targetRotations = 0;
-    OdometryControl odometryControl;
 
     float speed = .6f;
 
@@ -38,14 +42,15 @@ public class ProjectAluminumKnight extends LinearOpMode {
         left = hardwareMap.get(DcMotorEx.class,"left");
         rear = hardwareMap.get(DcMotorEx.class,"rear");
 
-        DriveTrainCode driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
+        driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
 
         driveTrainCode.InvertMotorDirection(Motor.backLeft);
+
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         lift.setDirection(DcMotorSimple.Direction.REVERSE);
-        odometryControl = new OdometryControl(right,left,rear,new Vector3(0,0,0));
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
@@ -53,16 +58,16 @@ public class ProjectAluminumKnight extends LinearOpMode {
         while (opModeIsActive()){
 
             if(gamepad1.dpad_up){
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,-.5f));
+                driveTrainCode.UpdateDriveTrain(new Vector3(0,0,-.5f));
             }else if(gamepad1.dpad_down){
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(0,0,.5f));
+                driveTrainCode.UpdateDriveTrain(new Vector3(0,0,.5f));
             }else if(gamepad1.dpad_right){
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(-.5f,0,0));
+                driveTrainCode.UpdateDriveTrain(new Vector3(-.5f,0,0));
             }else if(gamepad1.dpad_left) {
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.autonomous,new Vector3(.5f,0,0));
+                driveTrainCode.UpdateDriveTrain(new Vector3(.5f,0,0));
             }
             else {
-                driveTrainCode.UpdateDriveTrain(SelectedDrive.mecanum, speed);
+                driveTrainCode.UpdateDriveTrain(speed);
             }
 
             //region lifter buttons
@@ -99,6 +104,8 @@ public class ProjectAluminumKnight extends LinearOpMode {
                 grabber.setPosition(.35f);
             }
 
+            RegulateMotors();
+
             telemetry.addData("Lift Target: ", ((double)targetRotations));
             telemetry.addData("Current Lift Position: ", lift.getCurrentPosition());
             telemetry.update();
@@ -106,4 +113,51 @@ public class ProjectAluminumKnight extends LinearOpMode {
         }
 
     }
+
+    double flTicks = 0;
+    double currentFLTicks = 0;
+
+    double frTicks = 0;
+    double currentFRTicks = 0;
+
+    double blTicks = 0;
+    double currentBLTicks = 0;
+
+    double brTicks = 0;
+    double currentBRTicks = 0;
+
+    double deltaFR;
+    double deltaFL;
+    double deltaBR;
+    double deltaBL;
+
+    public  void RegulateMotors(){
+
+
+        flTicks = currentFLTicks;
+        blTicks = currentBLTicks;
+        frTicks = currentFRTicks;
+        brTicks = currentBRTicks;
+
+        currentFLTicks = driveTrainCode.flTicks;
+        currentBLTicks = driveTrainCode.blTicks;
+        currentFRTicks = driveTrainCode.frTicks;
+        currentBRTicks = driveTrainCode.brTicks;
+
+        deltaFL = currentFLTicks - blTicks;
+        deltaBL = currentBLTicks - blTicks;
+        deltaFR = currentFRTicks - frTicks;
+        deltaBR = currentBRTicks - brTicks;
+
+        telemetry.addData("FR:", deltaFR);
+
+        telemetry.addData("FL:", deltaFL);
+
+        telemetry.addData("BR:", deltaBR);
+
+        telemetry.addData("BL:", deltaBL);
+
+
+    }
+
 }
