@@ -118,8 +118,8 @@ public class DriveTrainCode {
 
     private void UpdateInput()
     {
-        LSX = lGpad.left_stick_x;
-        LSY = lGpad.left_stick_y;
+        LSX = Math.pow(lGpad.left_stick_x, 3);
+        LSY = Math.pow(lGpad.left_stick_y, 3);
         RSX = lGpad.right_stick_x;
     }
 

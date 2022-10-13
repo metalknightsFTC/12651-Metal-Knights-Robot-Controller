@@ -16,7 +16,7 @@ public class OdometryControl {
     //229mm tolerance
     float diameter = 1.96f; //50mm 1.96in
     int cpr = 8192;
-    double c = (float) 6.1575216;//(Math.PI) * (diameter / 2);//6.1575216
+    double c = 6.1575216;//(Math.PI) * (diameter / 2);//6.1575216
     Position robotPosition;
 
     DcMotorEx right;
@@ -56,12 +56,31 @@ public class OdometryControl {
     }
     //endregion
 
-    public  Vector3  MoveToPoint(Waypoint target)
+    public  Vector3  MoveToPoint(Vector3 target)
     {
-        float deltaX = target.xEnd - robotPosition.x;
-        float deltaZ = target.zEnd - robotPosition.z;
-        float deltaTheta = target.headingEnd - robotPosition.currentHeading;
-        return  new Vector3(deltaX, deltaTheta, deltaZ);
+        float deltaX = target.x - robotPosition.x;
+        float deltaZ = target.z - robotPosition.z;
+        float deltaTheta = target.y - robotPosition.currentHeading;
+
+        if(deltaX < -1){
+            deltaX = -1;
+        }else if(deltaX > 1){
+            deltaX = 1;
+        }
+
+        if(deltaZ < -1){
+            deltaZ = -1;
+        }else if(deltaZ > 1){
+            deltaZ = 1;
+        }
+
+        if(deltaTheta < -1){
+            deltaTheta = -1;
+        }else if(deltaTheta>1){
+            deltaTheta = 1;
+        }
+
+        return  new Vector3(deltaX * .2f, deltaTheta * .2f, deltaZ * .2f);
     }
 
     //region current position calculator algorithm
@@ -101,7 +120,6 @@ public class OdometryControl {
         if (robotPosition.currentHeading < 0){
             robotPosition.currentHeading += 360;
         }
-
         return new double[] {deltaX,deltaZ,deltaTheta};
     }
     //endregion
