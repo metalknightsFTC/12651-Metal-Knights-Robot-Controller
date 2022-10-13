@@ -1,4 +1,6 @@
 package org.firstinspires.ftc.teamcode;
+import android.annotation.SuppressLint;
+
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
@@ -8,7 +10,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.Enums.EndPoint;
 import org.firstinspires.ftc.teamcode.Enums.Motor;
-import org.firstinspires.ftc.teamcode.Enums.SelectedDrive;
 import org.firstinspires.ftc.teamcode.Enums.StartPoint;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Blinker;
@@ -16,8 +17,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import java.util.List;
-import com.qualcomm.robotcore.hardware.Blinker;
-import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous
 public class AutoFunctions extends LinearOpMode {
@@ -45,6 +44,7 @@ public class AutoFunctions extends LinearOpMode {
     double rightEncoderRotation = 0;
     double rearEncoderRotation = 0;
 
+    @SuppressLint("SdCardPath")
     private static final String TFOD_MODEL_ASSET =  /*"PowerPlay.tflite";*/
             "/sdcard/FIRST/tflitemodels/model.tflite";
 
@@ -328,9 +328,6 @@ public class AutoFunctions extends LinearOpMode {
         int targetRotations = 0;
 
         switch (level) {
-            case -1:
-                targetRotations = 0;
-                break;
             case 0:
                 targetRotations = (int) (538 * 3);
                 break;
@@ -519,11 +516,9 @@ public class AutoFunctions extends LinearOpMode {
                 if (updatedRecognitions != null) {
                     telemetry.addData("# Object Detected", updatedRecognitions.size());
                     // step through the list of recognitions and display boundary info.
-                    int i = 0;
                     for (Recognition recognition : updatedRecognitions) {
-                        telemetry.addData("Label: ", String.valueOf(i)," ", recognition.getLabel());
+                        telemetry.addData("Label: ", recognition.getLabel());
                         CheckEndPoint(recognition.getLabel());
-                        i++;
                         return true;
                     }
                 }else

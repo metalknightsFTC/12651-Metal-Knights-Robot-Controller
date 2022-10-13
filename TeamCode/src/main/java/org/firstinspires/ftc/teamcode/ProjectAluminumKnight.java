@@ -5,13 +5,8 @@ import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.qualcomm.robotcore.util.BatteryChecker;
-
 import org.firstinspires.ftc.teamcode.Enums.Motor;
-import org.firstinspires.ftc.teamcode.Enums.SelectedDrive;
 
 @TeleOp
 public class ProjectAluminumKnight extends LinearOpMode {
@@ -26,10 +21,10 @@ public class ProjectAluminumKnight extends LinearOpMode {
     DcMotorEx right;
     DcMotorEx left;
     DcMotorEx rear;
-    private boolean automatics = false;
     private int targetRotations = 0;
-
-    float speed = .6f;
+    float currentSpeed = .6f;
+    float slowSpeed = .3f;
+    float regularSpeed = .6f;
 
     @Override
     public void runOpMode(){
@@ -67,7 +62,12 @@ public class ProjectAluminumKnight extends LinearOpMode {
                 driveTrainCode.UpdateDriveTrain(new Vector3(.5f,0,0));
             }
             else {
-                driveTrainCode.UpdateDriveTrain(speed);
+                if(gamepad1.right_bumper){
+                    currentSpeed = slowSpeed;
+                }else{
+                    currentSpeed = regularSpeed;
+                }
+                driveTrainCode.UpdateDriveTrain(currentSpeed);
             }
 
             //region lifter buttons
