@@ -87,6 +87,7 @@ public class AutoFunctions extends LinearOpMode {
          */
         //endregion
         SetRoutine();
+
         RunRoutine();
     }
 
@@ -98,7 +99,7 @@ public class AutoFunctions extends LinearOpMode {
                 //pushback from wall
                 Move(1.5f,0f,0f,.3f);
                 //turn to junction
-                Move(0,0f,1.93f,.45f);
+                Move(0,0f,.75f,.45f);
                 //lift
                 SetLiftTarget(0);
                 //wait to lift
@@ -114,11 +115,11 @@ public class AutoFunctions extends LinearOpMode {
                 Move(0f,-3f,0f,.3f);
                 //lower
                 SetLiftTarget(-1);
-                Move(0,0f,-3.91f,.45f);
+                Move(0,0f,-.75f,.45f);
                 //strafe into position
                 Move(-1f,0f,0f,.4f);
                 //move to position 1
-                Move(0f,22,0f,.4f);
+                Move(0f,21,0f,.4f);
                 Move(24,0,0,.4f);
                 //endregion
                 break;
@@ -127,7 +128,7 @@ public class AutoFunctions extends LinearOpMode {
                 //pushback from wall
                 Move(1.5f,0f,0f,.3f);
                 //turn to junction
-                Move(0,0f,1.93f,.45f);
+                Move(0,0f,.75f,.45f);
                 //lift
                 SetLiftTarget(0);
                 //wait to lift
@@ -143,7 +144,7 @@ public class AutoFunctions extends LinearOpMode {
                 Move(0f,-3f,0f,.3f);
                 //lower
                 SetLiftTarget(-1);
-                Move(0,0f,-3.92f,.45f);
+                Move(0,0f,-.75f,.45f);
                 //strafe into position
                 Move(-1f,0f,0f,.4f);
                 Move(0,1.8f,0,.4f);
@@ -156,7 +157,7 @@ public class AutoFunctions extends LinearOpMode {
                 //pushback from wall
                 Move(1.5f,0f,0f,.3f);
                 //turn to junction
-                Move(0,0f,1.93f,.45f);
+                Move(0,0f,.75f,.45f);
                 //lift
                 SetLiftTarget(0);
                 //wait to lift
@@ -172,11 +173,11 @@ public class AutoFunctions extends LinearOpMode {
                 Move(0f,-3f,0f,.3f);
                 //lower
                 SetLiftTarget(-1);
-                Move(0,0f,-3.92f,.45f);
+                Move(0,0f,-.75f,.45f);
                 //strafe into position
                 Move(-.5f,0f,0f,.4f);
 
-                Move(0,-22f,0,.45f);
+                Move(0,-21f,0,.45f);
                 Move(20f,0,0,.45f);
 
                 //endregion
@@ -185,64 +186,67 @@ public class AutoFunctions extends LinearOpMode {
                 //pull off of wall
                 Move(1.5f,0,0,.3f);
                 //drive to the entrypoint
-                Move(0,20,0,.45f);
+                Move(0,15,0,.45f);
                 //Lift
                 SetLiftTarget(2);
                 //Drive to High junction
-                Move(24f,0,0,.45f);
+                Move(33,0,0,.45f);
                 //drive on top of high Junction
-                Move(0,4,0,.45f);
+                Move(0,3,0,.45f);
                 //drop cone
                 OpenClaw();
                 //move off of junction
-                Move(0,-4,0,.45f);
+                Move(0,-2,0,.45f);
                 //lower lift
                 SetLiftTarget(-1);
                 CloseClaw();
+                sleep(1000);
                 break;
             case 4:
                 //pull off of wall
                 Move(1.5f,0,0,.3f);
                 //drive to the entrypoint
-                Move(0,20,0,.45f);
+                Move(0,15,0,.45f);
                 //Lift
                 SetLiftTarget(2);
                 //Drive to High junction
-                Move(24f,0,0,.45f);
+                Move(33f,0,0,.45f);
                 //drive on top of high Junction
-                Move(0,4,0,.45f);
+                Move(0,3,0,.45f);
                 //drop cone
                 OpenClaw();
                 //move off of junction
-                Move(0,-4,0,.45f);
+                Move(0,-1.5f,0,.45f);
                 //lower lift
                 SetLiftTarget(-1);
                 CloseClaw();
+                sleep(1000);
                 //drive to position 2
-                Move(6,0,0,.45f);
-                Move(0,-20,0,.45f);
+                Move(7.5f,0,0,.45f);
+                Move(0,-17,0,.45f);
                 break;
             case 5:
                 //pull off of wall
                 Move(1.5f,0,0,.3f);
                 //drive to the entrypoint
-                Move(0,20,0,.45f);
+                Move(0,15,0,.45f);
                 //Lift
                 SetLiftTarget(2);
                 //Drive to High junction
-                Move(24f,0,0,.45f);
+                Move(33,0,0,.45f);
                 //drive on top of high Junction
-                Move(0,4,0,.45f);
+                Move(0,3,0,.25f);
                 //drop cone
                 OpenClaw();
                 //move off of junction
-                Move(0,-4,0,.45f);
+                Move(0,-2,0,.25f);
                 //lower lift
                 SetLiftTarget(-1);
                 CloseClaw();
+                sleep(1000);
                 //drive to position 2
-                Move(6,0,0,.45f);
-                Move(0,-40,0,.45f);
+                Move(7,0,0,.45f);
+                Move(0,-37,0,.45f);
                 break;
             default:
                 break;
@@ -254,7 +258,7 @@ public class AutoFunctions extends LinearOpMode {
     void  SetRoutine(){
         switch (startPoint){
 
-            case redLeft:
+            case left:
                 switch (endPoint){
                     case one:
                         routine = 0;
@@ -270,7 +274,7 @@ public class AutoFunctions extends LinearOpMode {
                         break;
                 }
                 break;
-            case redRight:
+            case right:
                 switch (endPoint){
                     case one:
                         routine = 3;
@@ -324,6 +328,7 @@ public class AutoFunctions extends LinearOpMode {
     }
     //endregion
 
+    //region Lifter code
     void  SetLiftTarget(int level){
         int targetRotations = 0;
 
@@ -345,9 +350,11 @@ public class AutoFunctions extends LinearOpMode {
         lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         lift.setPower(0.65);
     }
+//endregion
 
+    //region Movement code
     public void Move(float X, float Z,float thetaR, float speed){
-        double totalTurnCircumference = 26.7f;
+        double totalTurnCircumference = 4.925;
         double theta = totalTurnCircumference/thetaR;
         double totalMovementX = 0;
         double totalMovementZ = 0;
@@ -468,7 +475,7 @@ public class AutoFunctions extends LinearOpMode {
 
                 totalMovementZ += (deltaLeft + deltaRight) / 2;
                 totalMovementX += deltaBack;
-                t += (deltaLeft - deltaRight);
+                t += (deltaLeft-deltaRight)/2;
                 telemetry.addData("Turn: ", t);
                 telemetry.update();
                 driveTrainCode.UpdateDriveTrain(new Vector3(0, speed, 0));
@@ -492,7 +499,7 @@ public class AutoFunctions extends LinearOpMode {
 
                 totalMovementZ += (deltaLeft + deltaRight) / 2;
                 totalMovementX += deltaBack;
-                t += (deltaLeft - deltaRight)/2;
+                t += (deltaLeft-deltaRight)/2;
                 telemetry.addData("Turn: ", t);
                 telemetry.update();
                 driveTrainCode.UpdateDriveTrain(new Vector3(0, -speed, 0));
@@ -502,7 +509,9 @@ public class AutoFunctions extends LinearOpMode {
         //endregion
         driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
     }
+    //endregion
 
+    //region TensorFlow code
     boolean OperateTensorFlow()
     {
         if (tfod != null) {
@@ -531,6 +540,7 @@ public class AutoFunctions extends LinearOpMode {
         }
         return  false;
     }
+    //endregion
 
     void CheckEndPoint(String label)
     {
@@ -563,12 +573,12 @@ public class AutoFunctions extends LinearOpMode {
             telemetry.update();
             if (gamepad1.a)
             {
-                startPoint = StartPoint.redLeft;
+                startPoint = StartPoint.left;
                 return;
             }
             if (gamepad1.x)
             {
-                startPoint = StartPoint.redRight;
+                startPoint = StartPoint.right;
                 return;
             }
             /*
@@ -653,14 +663,16 @@ public class AutoFunctions extends LinearOpMode {
         InitVuforia();
         InitTfod();
 
-
-        telemetry.addData("Path Set ", "Start: ", startPoint.name());
+        if(startPoint == StartPoint.left){
+            telemetry.addData("Path Set ", "Start: Left");
+        }else if(startPoint == StartPoint.right){
+            telemetry.addData("Path Set ", "Start: Right");
+        }
         telemetry.addData("Status: ", "Initialized");
         telemetry.update();
 
     }
-
-
+    
     private void CheckForModel(){
         while (!OperateTensorFlow()){
             telemetry.addData("Scanning",".");

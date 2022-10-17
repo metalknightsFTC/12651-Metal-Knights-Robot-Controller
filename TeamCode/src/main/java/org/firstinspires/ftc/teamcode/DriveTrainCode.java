@@ -13,6 +13,7 @@ public class DriveTrainCode {
     private double RSX;
     private  DcMotor frontRight;
     private  DcMotor frontLeft;
+
     private  DcMotor backRight;
     private  DcMotor backLeft;
     //local reference to gamepad 1 passed by ref to constructor
@@ -29,7 +30,6 @@ public class DriveTrainCode {
         InitializeGamepad(gamepad);
         InitializeHardware(hardwareMap);
     }
-
     public void  UpdateDriveTrain(float speed)
     {
         UpdateInput();
