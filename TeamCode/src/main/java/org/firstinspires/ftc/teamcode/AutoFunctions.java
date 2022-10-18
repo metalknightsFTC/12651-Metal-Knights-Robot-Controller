@@ -96,155 +96,37 @@ public class AutoFunctions extends LinearOpMode {
         switch (routine) {
             case 0:
                 //region Case 0 Sword code
-                //pushback from wall
-                Move(1.5f,0f,0f,.3f);
-                //turn to junction
-                Move(0,0f,.75f,.45f);
-                //lift
-                SetLiftTarget(0);
-                //wait to lift
-                sleep(1000);
-                //drive to the junction
-                Move(0f,9f,0f,.3f);
-                //wait a bit to be sure
-                sleep(1000);
-                //drop cone
-                OpenClaw();
-                sleep(1000);
-                //move back off of junction9
-                Move(0f,-3f,0f,.3f);
-                //lower
-                SetLiftTarget(-1);
-                Move(0,0f,-.75f,.45f);
-                //strafe into position
-                Move(-1f,0f,0f,.4f);
-                //move to position 1
-                Move(0f,21,0f,.4f);
-                Move(24,0,0,.4f);
-                //endregion
+                LeftSideDropPreload();
+                //move to parking
+                Move(27,0f,0f,.45f);
+                Move(0,38,0,.45f);
+                //Move(12,0,0,.45f);
                 break;
             case 1:
                 //region Case 1 helmet code
-                //pushback from wall
-                Move(1.5f,0f,0f,.3f);
-                //turn to junction
-                Move(0,0f,.75f,.45f);
-                //lift
-                SetLiftTarget(0);
-                //wait to lift
-                sleep(1000);
-                //drive to the junction
-                Move(0f,9f,0f,.3f);
-                //wait a bit to be sure
-                sleep(1000);
-                //drop cone
-                OpenClaw();
-                sleep(1000);
-                //move back off of junction9
-                Move(0f,-3f,0f,.3f);
-                //lower
-                SetLiftTarget(-1);
-                Move(0,0f,-.75f,.45f);
-                //strafe into position
-                Move(-1f,0f,0f,.4f);
-                Move(0,1.8f,0,.4f);
-                //move to position 2
-                Move(20,0f,0f,.5f);
+                LeftSideDropPreload();
+                Move(3,0,0,.45f);
+                Move(0,12,0,.45f);
                 //endregion
                 break;
             case 2:
                 //region Case 2 Shield code
-                //pushback from wall
-                Move(1.5f,0f,0f,.3f);
-                //turn to junction
-                Move(0,0f,.75f,.45f);
-                //lift
-                SetLiftTarget(0);
-                //wait to lift
-                sleep(1000);
-                //drive to the junction
-                Move(0f,9f,0f,.3f);
-                //wait a bit to be sure
-                sleep(200);
-                //drop cone
-                OpenClaw();
-                sleep(200);
-                //move back off of junction
-                Move(0f,-3f,0f,.3f);
-                //lower
-                SetLiftTarget(-1);
-                Move(0,0f,-.75f,.45f);
-                //strafe into position
-                Move(-.5f,0f,0f,.4f);
-
-                Move(0,-21f,0,.45f);
-                Move(20f,0,0,.45f);
-
+                LeftSideDropPreload();
                 //endregion
                 break;
             case 3:
-                //pull off of wall
-                Move(1.5f,0,0,.3f);
-                //drive to the entrypoint
-                Move(0,15,0,.45f);
-                //Lift
-                SetLiftTarget(2);
-                //Drive to High junction
-                Move(33,0,0,.45f);
-                //drive on top of high Junction
-                Move(0,3,0,.45f);
-                //drop cone
-                OpenClaw();
-                //move off of junction
-                Move(0,-2,0,.45f);
-                //lower lift
-                SetLiftTarget(-1);
-                CloseClaw();
-                sleep(1000);
+                RightSideDropPreload();
+                //drive to position 1
                 break;
             case 4:
-                //pull off of wall
-                Move(1.5f,0,0,.3f);
-                //drive to the entrypoint
-                Move(0,15,0,.45f);
-                //Lift
-                SetLiftTarget(2);
-                //Drive to High junction
-                Move(33f,0,0,.45f);
-                //drive on top of high Junction
-                Move(0,3,0,.45f);
-                //drop cone
-                OpenClaw();
-                //move off of junction
-                Move(0,-1.5f,0,.45f);
-                //lower lift
-                SetLiftTarget(-1);
-                CloseClaw();
-                sleep(1000);
+                RightSideDropPreload();
                 //drive to position 2
                 Move(7.5f,0,0,.45f);
                 Move(0,-17,0,.45f);
                 break;
             case 5:
-                //pull off of wall
-                Move(1.5f,0,0,.3f);
-                //drive to the entrypoint
-                Move(0,15,0,.45f);
-                //Lift
-                SetLiftTarget(2);
-                //Drive to High junction
-                Move(33,0,0,.45f);
-                //drive on top of high Junction
-                Move(0,3,0,.25f);
-                //drop cone
-                OpenClaw();
-                //move off of junction
-                Move(0,-2,0,.25f);
-                //lower lift
-                SetLiftTarget(-1);
-                CloseClaw();
-                sleep(1000);
-                //drive to position 2
+                RightSideDropPreload();
+                //drive to position 3
                 Move(7,0,0,.45f);
                 Move(0,-37,0,.45f);
                 break;
@@ -334,13 +216,13 @@ public class AutoFunctions extends LinearOpMode {
 
         switch (level) {
             case 0:
-                targetRotations = (int) (538 * 3);
+                targetRotations = (int) (538 * 4);
                 break;
             case 1:
-                targetRotations = (int) (538 * 4.5);
+                targetRotations = (int) (538 * 5.5);
                 break;
             case 2:
-                targetRotations = 3340;
+                targetRotations = 4650;
                 break;
             default:
                 break;
@@ -563,22 +445,27 @@ public class AutoFunctions extends LinearOpMode {
         telemetry.addData("endPoint", endPoint.name());
     }
 
-    void  SetStartPoint(){
+    void  SetStartPoint()
+    {
         while(startPoint == StartPoint.UnSet && !isStopRequested())
         {
-            telemetry.addData("A: ","Left");
-            telemetry.addData("X: ","Right");
-            //telemetry.addData("Y: ","Blue Side Left");
-            //telemetry.addData("B: ","Blue Side Right");
+            telemetry.addData("X: ","Left");
+            telemetry.addData("B: ","Right");
+            /*
+            telemetry.addData("Y: ","Blue Side Left");
+            telemetry.addData("B: ","Blue Side Right");
+            */
             telemetry.update();
+            /*
             if (gamepad1.a)
             {
                 startPoint = StartPoint.left;
                 return;
             }
+            */
             if (gamepad1.x)
             {
-                startPoint = StartPoint.right;
+                startPoint = StartPoint.left;
                 return;
             }
             /*
@@ -587,11 +474,12 @@ public class AutoFunctions extends LinearOpMode {
                 startPoint = StartPoint.blueLeft;
                 return;
             }
+            */
             if (gamepad1.b)
             {
-                startPoint = StartPoint.blueRight;
+                startPoint = StartPoint.right;
                 return;
-            }*/
+            }
         }
     }
 
@@ -600,10 +488,11 @@ public class AutoFunctions extends LinearOpMode {
     }
 
     private void CloseClaw(){
-        grabber.setPosition(.35f);
+        grabber.setPosition(.32f);
     }
 
-    private void InitVuforia() {
+    private void InitVuforia()
+    {
 
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
@@ -613,7 +502,8 @@ public class AutoFunctions extends LinearOpMode {
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
     }
 
-    private void InitTfod() {
+    private void InitTfod()
+    {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
@@ -630,7 +520,8 @@ public class AutoFunctions extends LinearOpMode {
         telemetry.addData("CV Status: ","GREEN");
     }
 
-    private void Initialize(){
+    private void Initialize()
+    {
         lift = hardwareMap.get(DcMotor.class,"lifter");
         grabber = hardwareMap.get(Servo.class,"grabber");
         Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
@@ -673,7 +564,8 @@ public class AutoFunctions extends LinearOpMode {
 
     }
     
-    private void CheckForModel(){
+    private void CheckForModel()
+    {
         while (!OperateTensorFlow()){
             telemetry.addData("Scanning",".");
             telemetry.update();
@@ -695,5 +587,49 @@ public class AutoFunctions extends LinearOpMode {
             telemetry.update();
         }
     }
+
+    private void LeftSideDropPreload()
+    {
+        //pushback from wall
+        Move(1.5f,0f,0f,.3f);
+        //go to junction and lift
+        Move(0,-15f,0f,.45f);
+        SetLiftTarget(0);
+        sleep(500);
+        Move(11,0f,0f,.45f);
+        Move(0,2f,0f,.45f);
+        sleep(500);
+        OpenClaw();
+        sleep(500);
+        //back off junction
+        Move(0,-.2f,0f,.45f);
+        SetLiftTarget(-1);
+        sleep(500);
+    }
+
+    private void RightSideDropPreload()
+    {
+        //pull off of wall
+        Move(1.5f,0,0,.3f);
+        //drive to the entrypoint
+        Move(0,15,0,.45f);
+        //Lift
+        SetLiftTarget(2);
+        sleep(500);
+        //Drive to High junction
+        Move(33,0,0,.45f);
+        //drive on top of high Junction
+        Move(0,3,0,.45f);
+        //drop cone
+        OpenClaw();
+        sleep(500);
+        //move off of junction
+        Move(0,-2,0,.45f);
+        //lower lift
+        SetLiftTarget(-1);
+        //CloseClaw();
+        sleep(500);
+    }
+
 
 }

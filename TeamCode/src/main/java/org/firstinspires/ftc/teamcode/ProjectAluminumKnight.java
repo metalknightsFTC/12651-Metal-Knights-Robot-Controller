@@ -79,7 +79,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
                 targetRotations = (int)(538 * 4.5);
             }
             if(gamepad1.y){
-                targetRotations = 3330;
+                targetRotations = 4650;
             }
             if(gamepad1.b){
                 targetRotations = 0;
@@ -91,8 +91,8 @@ public class ProjectAluminumKnight extends LinearOpMode {
             if(targetRotations < 0){
                 targetRotations = 0;
             }
-            if(targetRotations > 3330){
-                targetRotations = 3330;
+            if(targetRotations > 4650){
+                targetRotations = 4650;
             }
             lift.setTargetPosition(targetRotations);
             lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -101,10 +101,10 @@ public class ProjectAluminumKnight extends LinearOpMode {
             if(gamepad1.left_bumper){
                 grabber.setPosition(.22f);
             }else{
-                grabber.setPosition(.35f);
+                grabber.setPosition(.32f);
             }
 
-            RegulateMotors();
+            //RegulateMotors();
 
             telemetry.addData("Lift Target: ", ((double)targetRotations));
             telemetry.addData("Current Lift Position: ", lift.getCurrentPosition());
