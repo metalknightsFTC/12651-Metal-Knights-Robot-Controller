@@ -97,21 +97,24 @@ public class AutoFunctions extends LinearOpMode {
             case 0:
                 //region Case 0 Sword code
                 LeftSideDropPreload();
+                sleep(500);
                 //move to parking
-                Move(27,0f,0f,.45f);
-                Move(0,38,0,.45f);
+                Move(31,0f,0f,.45f);
+                Move(0,36.5f,0,.45f);
                 //Move(12,0,0,.45f);
                 break;
             case 1:
                 //region Case 1 helmet code
                 LeftSideDropPreload();
-                Move(3,0,0,.45f);
-                Move(0,12,0,.45f);
+                sleep(500);
+                Move(31,0f,0f,.45f);
+                Move(0,20f,0,.45f);
                 //endregion
                 break;
             case 2:
                 //region Case 2 Shield code
                 LeftSideDropPreload();
+                Move(5,0f,0f,.45f);
                 //endregion
                 break;
             case 3:
@@ -593,16 +596,17 @@ public class AutoFunctions extends LinearOpMode {
         //pushback from wall
         Move(1.5f,0f,0f,.3f);
         //go to junction and lift
-        Move(0,-15f,0f,.45f);
+        Move(0,-14f,0f,.45f);
         SetLiftTarget(0);
         sleep(500);
-        Move(11,0f,0f,.45f);
-        Move(0,2f,0f,.45f);
+        Move(12,0f,0f,.45f);
+        Move(0,3f,0f,.25f);
         sleep(500);
         OpenClaw();
         sleep(500);
         //back off junction
-        Move(0,-.2f,0f,.45f);
+        Move(0,-2.5f,0f,.25f);
+        CloseClaw();
         SetLiftTarget(-1);
         sleep(500);
     }
@@ -627,7 +631,7 @@ public class AutoFunctions extends LinearOpMode {
         Move(0,-2,0,.45f);
         //lower lift
         SetLiftTarget(-1);
-        //CloseClaw();
+        CloseClaw();
         sleep(500);
     }
 

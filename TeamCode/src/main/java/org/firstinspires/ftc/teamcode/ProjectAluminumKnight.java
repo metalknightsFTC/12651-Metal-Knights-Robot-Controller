@@ -73,10 +73,10 @@ public class ProjectAluminumKnight extends LinearOpMode {
             //region lifter buttons
             //538
             if(gamepad1.a){
-                targetRotations = (int)(538 * 3);
+                targetRotations = (int)(538 * 4);
             }
             if(gamepad1.x){
-                targetRotations = (int)(538 * 4.5);
+                targetRotations = (int)(538 * 6.5);
             }
             if(gamepad1.y){
                 targetRotations = 4650;
@@ -96,7 +96,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
             }
             lift.setTargetPosition(targetRotations);
             lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            lift.setPower(.75);
+            lift.setPower(1);
 
             if(gamepad1.left_bumper){
                 grabber.setPosition(.22f);
