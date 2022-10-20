@@ -73,7 +73,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
             //region lifter buttons
             //538
             if(gamepad1.a){
-                targetRotations = (int)(538 * 4);
+                targetRotations = (538 * 4);
             }
             if(gamepad1.x){
                 targetRotations = (int)(538 * 6.5);
@@ -101,7 +101,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
             if(gamepad1.left_bumper){
                 grabber.setPosition(.22f);
             }else{
-                grabber.setPosition(.32f);
+                grabber.setPosition(.33f);
             }
 
             //RegulateMotors();

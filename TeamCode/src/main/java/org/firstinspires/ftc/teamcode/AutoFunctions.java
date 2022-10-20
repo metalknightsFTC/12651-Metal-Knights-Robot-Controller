@@ -99,8 +99,8 @@ public class AutoFunctions extends LinearOpMode {
                 LeftSideDropPreload();
                 sleep(500);
                 //move to parking
-                Move(31,0f,0f,.45f);
-                Move(0,36.5f,0,.45f);
+                Move(32,0f,0f,.45f);
+                Move(0,35f,0,.45f);
                 //Move(12,0,0,.45f);
                 break;
             case 1:
@@ -108,7 +108,7 @@ public class AutoFunctions extends LinearOpMode {
                 LeftSideDropPreload();
                 sleep(500);
                 Move(31,0f,0f,.45f);
-                Move(0,20f,0,.45f);
+                Move(0,16f,0,.45f);
                 //endregion
                 break;
             case 2:
@@ -219,10 +219,10 @@ public class AutoFunctions extends LinearOpMode {
 
         switch (level) {
             case 0:
-                targetRotations = (int) (538 * 4);
+                targetRotations = (538 * 4);
                 break;
             case 1:
-                targetRotations = (int) (538 * 5.5);
+                targetRotations = (int)(538 * 5.5);
                 break;
             case 2:
                 targetRotations = 4650;
@@ -599,13 +599,13 @@ public class AutoFunctions extends LinearOpMode {
         Move(0,-14f,0f,.45f);
         SetLiftTarget(0);
         sleep(500);
-        Move(12,0f,0f,.45f);
-        Move(0,3f,0f,.25f);
+        Move(11.5f,0f,0f,.45f);
+        Move(0,6f,0f,.25f);
         sleep(500);
         OpenClaw();
         sleep(500);
         //back off junction
-        Move(0,-2.5f,0f,.25f);
+        Move(0,-4f,0f,.25f);
         CloseClaw();
         SetLiftTarget(-1);
         sleep(500);
@@ -616,15 +616,16 @@ public class AutoFunctions extends LinearOpMode {
         //pull off of wall
         Move(1.5f,0,0,.3f);
         //drive to the entrypoint
-        Move(0,15,0,.45f);
+        Move(0,23,0,.45f);
         //Lift
         SetLiftTarget(2);
-        sleep(500);
+        sleep(3000);
         //Drive to High junction
-        Move(33,0,0,.45f);
+        Move(35,0,0,.45f);
         //drive on top of high Junction
-        Move(0,3,0,.45f);
+        Move(0,5.5f,0,.45f);
         //drop cone
+        sleep(2500);
         OpenClaw();
         sleep(500);
         //move off of junction
@@ -632,7 +633,7 @@ public class AutoFunctions extends LinearOpMode {
         //lower lift
         SetLiftTarget(-1);
         CloseClaw();
-        sleep(500);
+        sleep(3000);
     }
 
 
