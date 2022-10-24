@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.Enums.Motor;
+import org.firstinspires.ftc.teamcode.Vectors.*;
 
 @TeleOp
 public class ProjectAluminumKnight extends LinearOpMode {
@@ -26,6 +27,16 @@ public class ProjectAluminumKnight extends LinearOpMode {
     float slowSpeed = .3f;
     float regularSpeed = .6f;
 
+    int cpr = 8192;
+    double c = 6.1575216;//(Math.PI) * (diameter / 2);//6.1575216
+
+    double currentLeftEncoderRotation = 0;
+    double currentRightEncoderRotation = 0;
+    double currentRearEncoderRotation = 0;
+    double leftEncoderRotation = 0;
+    double rightEncoderRotation = 0;
+    double rearEncoderRotation = 0;
+
     @Override
     public void runOpMode(){
         Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
@@ -40,6 +51,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
         driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
 
         driveTrainCode.InvertMotorDirection(Motor.backLeft);
+        driveTrainCode.InvertMotorDirection(Motor.frontLeft);
 
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -67,7 +79,8 @@ public class ProjectAluminumKnight extends LinearOpMode {
                 }else{
                     currentSpeed = regularSpeed;
                 }
-                driveTrainCode.UpdateDriveTrain(currentSpeed);
+                driveTrainCode.UpdateDriveTrain(currentSpeed,0);
+
             }
 
             //region lifter buttons
@@ -114,49 +127,34 @@ public class ProjectAluminumKnight extends LinearOpMode {
 
     }
 
-    double flTicks = 0;
-    double currentFLTicks = 0;
+    double totalMovementX = 0;
+    double totalMovementZ = 0;
+    double t = 0;
 
-    double frTicks = 0;
-    double currentFRTicks = 0;
+    public  float StrafeCorrection(){
+        double deltaLeft;
+        double deltaRight;
+        double deltaBack;
 
-    double blTicks = 0;
-    double currentBLTicks = 0;
+        //region X checks
+        leftEncoderRotation = currentLeftEncoderRotation;
+        rightEncoderRotation = currentRightEncoderRotation;
+        rearEncoderRotation = currentRearEncoderRotation;
 
-    double brTicks = 0;
-    double currentBRTicks = 0;
+        currentRightEncoderRotation = right.getCurrentPosition();
+        currentRearEncoderRotation = rear.getCurrentPosition();
+        currentLeftEncoderRotation = left.getCurrentPosition();
 
-    double deltaFR;
-    double deltaFL;
-    double deltaBR;
-    double deltaBL;
+        deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / cpr) * c;
+        deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / cpr) * c;
+        deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / cpr) * c;
 
-    public  void RegulateMotors(){
+        totalMovementZ += (deltaLeft + deltaRight) / 2;
+        totalMovementX += deltaBack;
 
+        float turnMod = (float) ((deltaLeft-deltaRight)/2.5);
 
-        flTicks = currentFLTicks;
-        blTicks = currentBLTicks;
-        frTicks = currentFRTicks;
-        brTicks = currentBRTicks;
-
-        currentFLTicks = driveTrainCode.flTicks;
-        currentBLTicks = driveTrainCode.blTicks;
-        currentFRTicks = driveTrainCode.frTicks;
-        currentBRTicks = driveTrainCode.brTicks;
-
-        deltaFL = currentFLTicks - blTicks;
-        deltaBL = currentBLTicks - blTicks;
-        deltaFR = currentFRTicks - frTicks;
-        deltaBR = currentBRTicks - brTicks;
-
-        telemetry.addData("FR:", deltaFR);
-
-        telemetry.addData("FL:", deltaFL);
-
-        telemetry.addData("BR:", deltaBR);
-
-        telemetry.addData("BL:", deltaBL);
-
+        return -turnMod;
 
     }
 

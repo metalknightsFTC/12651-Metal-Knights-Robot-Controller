@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import org.firstinspires.ftc.teamcode.Vectors.*;
 import java.util.List;
 
 @Autonomous
@@ -87,7 +88,6 @@ public class AutoFunctions extends LinearOpMode {
          */
         //endregion
         SetRoutine();
-
         RunRoutine();
     }
 
@@ -99,39 +99,53 @@ public class AutoFunctions extends LinearOpMode {
                 LeftSideDropPreload();
                 sleep(500);
                 //move to parking
-                Move(32,0f,0f,.45f);
-                Move(0,35f,0,.45f);
+                Move(32,0f,0f,.35f);
+                sleep(500);
+                Move(0,41f,0,.35f);
                 //Move(12,0,0,.45f);
                 break;
             case 1:
                 //region Case 1 helmet code
                 LeftSideDropPreload();
                 sleep(500);
-                Move(31,0f,0f,.45f);
-                Move(0,16f,0,.45f);
+                Move(31,0f,0f,.35f);
+                sleep(500);
+                Move(0,17f,0,.35f);
                 //endregion
                 break;
             case 2:
                 //region Case 2 Shield code
                 LeftSideDropPreload();
-                Move(5,0f,0f,.45f);
+                sleep(500);
+                Move(6,0f,0f,.35f);
+                sleep(500);
                 //endregion
                 break;
             case 3:
                 RightSideDropPreload();
+                sleep(500);
+                Move(-10,0,0,.3f);
+                sleep(500);
+                Move(0,23f,0,.3f);
                 //drive to position 1
                 break;
             case 4:
                 RightSideDropPreload();
+                sleep(500);
+                Move(6,0,0,.3f);
                 //drive to position 2
-                Move(7.5f,0,0,.45f);
-                Move(0,-17,0,.45f);
+                //Move(7.5f,0,0,.35f);
+                //Move(0,-17,0,.35f);
                 break;
             case 5:
                 RightSideDropPreload();
+                sleep(500);
+                Move(-10,0,0,.3f);
+                sleep(500);
+                Move(0,-23f,0,.3f);
                 //drive to position 3
-                Move(7,0,0,.45f);
-                Move(0,-37,0,.45f);
+                //Move(7,0,0,.35f);
+                //Move(0,-37,0,.35f);
                 break;
             default:
                 break;
@@ -237,16 +251,19 @@ public class AutoFunctions extends LinearOpMode {
     }
 //endregion
 
+    double totalMovementX = 0;
+    double totalMovementZ = 0;
+    double t = 0;
+
     //region Movement code
     public void Move(float X, float Z,float thetaR, float speed){
+
         double totalTurnCircumference = 4.925;
         double theta = totalTurnCircumference/thetaR;
-        double totalMovementX = 0;
-        double totalMovementZ = 0;
-        double t = 0;
         double deltaLeft;
         double deltaRight;
         double deltaBack;
+
         //region X checks
         if(X > 0 && Z == 0) {
             while (totalMovementX < X && opModeIsActive()) {
@@ -265,9 +282,11 @@ public class AutoFunctions extends LinearOpMode {
                 totalMovementZ += (deltaLeft + deltaRight) / 2;
                 totalMovementX += deltaBack;
 
+                float turnMod = (float) ((deltaLeft-deltaRight)/2.5);
+
                 telemetry.addData("X ", totalMovementX);
                 telemetry.update();
-                driveTrainCode.UpdateDriveTrain(new Vector3(speed, 0, 0));
+                driveTrainCode.UpdateDriveTrain(new Vector3(speed, -turnMod, 0));
             }
         }
         if(X < 0 && Z == 0) {
@@ -287,9 +306,11 @@ public class AutoFunctions extends LinearOpMode {
                 totalMovementZ += (deltaLeft + deltaRight) / 2;
                 totalMovementX += deltaBack;
 
+                float turnMod = (float) ((deltaLeft-deltaRight)/2.5);
+
                 telemetry.addData("X: ", totalMovementX);
                 telemetry.update();
-                driveTrainCode.UpdateDriveTrain(new Vector3(-speed, 0, 0));
+                driveTrainCode.UpdateDriveTrain(new Vector3(-speed, turnMod, 0));
             }
         }
         //endregion
@@ -312,6 +333,9 @@ public class AutoFunctions extends LinearOpMode {
                 totalMovementZ += (deltaLeft + deltaRight) / 2;
                 totalMovementX += deltaBack;
 
+
+                float turnMod = (float) (deltaBack / 4);
+
                 telemetry.addData("Z: ", totalMovementZ);
                 telemetry.update();
                 driveTrainCode.UpdateDriveTrain(new Vector3(0, 0, speed));
@@ -333,6 +357,8 @@ public class AutoFunctions extends LinearOpMode {
 
                 totalMovementZ += (deltaLeft + deltaRight) / 2;
                 totalMovementX += deltaBack;
+
+                float turnMod = (float) (deltaBack / 4);
 
                 telemetry.addData("Z: ", totalMovementZ);
                 telemetry.update();
@@ -392,7 +418,11 @@ public class AutoFunctions extends LinearOpMode {
         }
 
         //endregion
+
         driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
+        totalMovementZ = 0;
+        totalMovementX = 0;
+        t = 0;
     }
     //endregion
 
@@ -536,7 +566,7 @@ public class AutoFunctions extends LinearOpMode {
 
         driveTrainCode = new DriveTrainCode(gamepad1 ,hardwareMap);
 
-        driveTrainCode.InvertMotorDirection(Motor.frontLeft);
+        //driveTrainCode.InvertMotorDirection(Motor.frontLeft);
         driveTrainCode.InvertMotorDirection(Motor.backRight);
         driveTrainCode.InvertMotorDirection(Motor.frontRight);
 
@@ -594,19 +624,27 @@ public class AutoFunctions extends LinearOpMode {
     private void LeftSideDropPreload()
     {
         //pushback from wall
-        Move(1.5f,0f,0f,.3f);
+        Move(3.5f,0f,0f,.3f);
         //go to junction and lift
-        Move(0,-14f,0f,.45f);
+        sleep(500);
+        Move(0,-15f,0f,.35f);
+
         SetLiftTarget(0);
         sleep(500);
-        Move(11.5f,0f,0f,.45f);
-        Move(0,6f,0f,.25f);
+
+        Move(7.5f,0f,0f,.35f);
+        sleep(500);
+        Move(0,5.5f,0f,.25f);
+
         sleep(500);
         OpenClaw();
         sleep(500);
-        //back off junction
-        Move(0,-4f,0f,.25f);
+
+        Move(0,-2.5f,0f,.25f);
+
+        sleep(500);
         CloseClaw();
+        sleep(500);
         SetLiftTarget(-1);
         sleep(500);
     }
@@ -615,25 +653,35 @@ public class AutoFunctions extends LinearOpMode {
     {
         //pull off of wall
         Move(1.5f,0,0,.3f);
+        sleep(500);
         //drive to the entrypoint
-        Move(0,23,0,.45f);
-        //Lift
-        SetLiftTarget(2);
-        sleep(3000);
-        //Drive to High junction
-        Move(35,0,0,.45f);
-        //drive on top of high Junction
-        Move(0,5.5f,0,.45f);
-        //drop cone
-        sleep(2500);
+        Move(0,5.5f,0,.3f);
+
+        sleep(500);
+        SetLiftTarget(0);
+        sleep(500);
+
+        Move(10f,0,0,.3f);
+        sleep(500);
+        Move(0,.5f,0,.3f);
+        sleep(500);
+        SetLiftTarget(0);
+        sleep(500);
+
         OpenClaw();
         sleep(500);
-        //move off of junction
-        Move(0,-2,0,.45f);
-        //lower lift
+
+        Move(0,-2,0,.3f);
+
+        sleep(500);
         SetLiftTarget(-1);
+        sleep(500);
+
         CloseClaw();
-        sleep(3000);
+        sleep(500);
+
+        //Move(-1,0,0,.3f);
+
     }
 
 

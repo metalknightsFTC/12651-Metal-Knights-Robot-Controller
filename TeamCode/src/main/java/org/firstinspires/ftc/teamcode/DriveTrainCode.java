@@ -3,14 +3,15 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import org.firstinspires.ftc.teamcode.Vectors.*;
 
 import org.firstinspires.ftc.teamcode.Enums.Motor;
 
 public class DriveTrainCode {
 
-    private double LSX;
-    private double LSY;
-    private double RSX;
+    public double LSX;
+    public double LSY;
+    public double RSX;
     private  DcMotor frontRight;
     private  DcMotor frontLeft;
 
@@ -30,10 +31,10 @@ public class DriveTrainCode {
         InitializeGamepad(gamepad);
         InitializeHardware(hardwareMap);
     }
-    public void  UpdateDriveTrain(float speed)
+    public void  UpdateDriveTrain(float speed, float strafeCorrection)
     {
         UpdateInput();
-        UpdateMecanum(speed);
+        UpdateMecanum(speed, strafeCorrection);
     }
 
     public void  UpdateDriveTrain(Vector3 direction)
@@ -42,19 +43,14 @@ public class DriveTrainCode {
     }
 
 
-    private  void UpdateMecanum(float speed)
+    private  void UpdateMecanum(float speed, float strafeCorrection)
     {
-        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontLeft.setPower(((LSY)-(RSX+strafeCorrection)-(LSX)) * speed);
+        backLeft.setPower(((LSY)-(RSX+strafeCorrection)+(LSX)) * speed);
 
-        frontLeft.setPower(((LSY)-(RSX)-(LSX)) * speed);
-        backLeft.setPower(((LSY)-(RSX)+(LSX)) * speed);
-
-        frontRight.setPower(((LSY)+(RSX)+(LSX)) * speed);
-        backRight.setPower(((LSY)+(RSX)-(LSX)) * speed);
+        frontRight.setPower(((LSY)+(RSX+strafeCorrection)+(LSX)) * speed);
+        backRight.setPower(((LSY)+(RSX+strafeCorrection)-(LSX)) * speed);
     }
 
     public  void InvertMotorDirection(Motor selectedMotor)
@@ -72,16 +68,8 @@ public class DriveTrainCode {
 
     private void  SimulateStick(float x, float y, float t)
     {
-
-        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        frontLeft.setPower(((y)+(t)+(x)));
+        frontLeft.setPower((y)+(t)+(x));
         backLeft.setPower(((y)+(t)-(x)));
-
         frontRight.setPower(((y)-(t)-(x)));
         backRight.setPower(((y)-(t)+(x)));
 
@@ -111,6 +99,17 @@ public class DriveTrainCode {
         backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     private  void InitializeGamepad(Gamepad gpad)
