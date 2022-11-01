@@ -3,29 +3,25 @@ import org.firstinspires.ftc.teamcode.Vectors.*;
 
 public class PathMaster {
 
-    Vector3[] changesInPosition;
+    Vector4[] changesInPosition;
+
+    public  Vector4 NextPoint(int index){
+        return  changesInPosition[index];
+    }
+
+    public int points()
+    {
+        return changesInPosition.length;
+    }
 
     public void InitializePath(int pathCode){
         switch (pathCode){
             case 0:
-                changesInPosition = new Vector3[3];
-                changesInPosition[0] = new Vector3(0,0,0);
+                changesInPosition = new Vector4[3];
+                changesInPosition[0] = new Vector4(3.5f,0,0,.25f);
                 break;
             case 1:
-                changesInPosition = new Vector3[3];
-                break;
-            case 2:
-                changesInPosition = new Vector3[3];
-                break;
-            case 3:
-                changesInPosition = new Vector3[3];
-                break;
-            case 4:
-                changesInPosition = new Vector3[3];
-                break;
-            case 5:
-                changesInPosition = new Vector3[3];
-                break;
+                changesInPosition = new Vector4[1];
             default:
                 break;
         }
