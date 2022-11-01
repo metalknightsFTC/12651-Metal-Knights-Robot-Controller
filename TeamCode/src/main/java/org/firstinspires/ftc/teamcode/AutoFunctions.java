@@ -2,18 +2,11 @@ package org.firstinspires.ftc.teamcode;
 import android.annotation.SuppressLint;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.Enums.EndPoint;
@@ -43,9 +36,6 @@ public class AutoFunctions extends LinearOpMode {
 
     private int routine = 0;
 
-    private double currentLeftEncoderRotation = 0;
-    private double currentRightEncoderRotation = 0;
-    private double currentRearEncoderRotation = 0;
     private IMUController imu;
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
@@ -283,9 +273,6 @@ public class AutoFunctions extends LinearOpMode {
     }
 //endregion
 
-    double totalMovementX = 0;
-    double totalMovementZ = 0;
-    double t = 0;
     double coordZ = 0;
     double coordX = 0;
 
@@ -293,21 +280,29 @@ public class AutoFunctions extends LinearOpMode {
     //slows down after a threshold is reached
     //region Movement code
     public void Move(float X, float Z, float speed){
-
-        double totalTurnCircumference = 4.925;
+        //how far the robot has left to move
+        double xDist = X;
+        double zDist = Z;
+        //how far the robot has moved so far
+        double totalMovementX = 0;
+        double totalMovementZ = 0;
+        //previously measured encoder positions
+        double rearEncoderRotation;
+        double rightEncoderRotation;
+        double leftEncoderRotation;
+        //currently measured encoder rotation
+        double currentLeftEncoderRotation = 0;
+        double currentRightEncoderRotation = 0;
+        double currentRearEncoderRotation = 0;
+        //the distance between the current encoder positions and the previous encoder positions
         double deltaLeft;
         double deltaRight;
         double deltaBack;
-        double xDist = X;
-        double zDist = Z;
+        //ticks per revolution
+        int tpr = 8192;//found on REV encoder specs chart
+        double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
 
         //region X checks
-        double rearEncoderRotation = 0;
-        double rightEncoderRotation = 0;
-        double leftEncoderRotation = 0;
-        int cpr = 8192;
-        //(Math.PI) * (diameter / 2);//6.1575216
-        double c = 6.1575216;
         if(xDist != 0 && zDist == 0)
         {
             while (xDist < -.045f || xDist > .045f && opModeIsActive())
@@ -321,9 +316,9 @@ public class AutoFunctions extends LinearOpMode {
                 currentRearEncoderRotation = rear.getCurrentPosition();
                 currentLeftEncoderRotation = left.getCurrentPosition();
 
-                deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / cpr) * c;
-                deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / cpr) * c;
-                deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / cpr) * c;
+                deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / tpr) * c;
+                deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / tpr) * c;
+                deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
                 //endregion
 
                 totalMovementZ += (deltaLeft + deltaRight) / 2;
@@ -335,10 +330,12 @@ public class AutoFunctions extends LinearOpMode {
                 delta = Range(delta,-1,1);
 
                 float turnMod = (float) imu.AngleDeviation(0) / 20;
-                telemetry.addData("angle: ", imu.GetAngle());
+
+                telemetry.addData("Global Heading: ", imu.heading);
                 telemetry.addData("Z: ", coordZ);
                 telemetry.addData("X ", coordX);
                 telemetry.update();
+
                 driveTrainCode.UpdateDriveTrain(new Vector3(speed * delta, -turnMod*speed, 0));
             }
         }
@@ -359,9 +356,9 @@ public class AutoFunctions extends LinearOpMode {
                 currentRearEncoderRotation = rear.getCurrentPosition();
                 currentLeftEncoderRotation = left.getCurrentPosition();
 
-                deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / cpr) * c;
-                deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / cpr) * c;
-                deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / cpr) * c;
+                deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / tpr) * c;
+                deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / tpr) * c;
+                deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
                 //endregion
 
                 totalMovementZ += (deltaLeft + deltaRight) / 2;
@@ -374,20 +371,19 @@ public class AutoFunctions extends LinearOpMode {
 
                 float turnMod = (float) imu.AngleDeviation(0) / 20;
 
-                telemetry.addData("angle: ", imu.GetAngle());
+                telemetry.addData("Global Heading: ", imu.heading);
                 telemetry.addData("Z: ", coordZ);
                 telemetry.addData("X ", coordX);
                 telemetry.update();
+
                 driveTrainCode.UpdateDriveTrain(new Vector3(0, -turnMod * speed, speed * delta));
             }
-        }//endregion
+        }
+        //endregion
 
         coordX += totalMovementX;
         coordZ += totalMovementZ;
         driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
-        totalMovementZ = 0;
-        totalMovementX = 0;
-        t = 0;
     }
     //endregion
 
@@ -688,7 +684,5 @@ public class AutoFunctions extends LinearOpMode {
         SetLiftTarget(-1);
         sleep(500);
         Move(-12,0,.5f);
-
-
     }
 }
