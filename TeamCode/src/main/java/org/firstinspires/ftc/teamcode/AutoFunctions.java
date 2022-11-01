@@ -43,20 +43,10 @@ public class AutoFunctions extends LinearOpMode {
 
     private int routine = 0;
 
-    private int cpr = 8192;
-    private double c = 6.1575216;//(Math.PI) * (diameter / 2);//6.1575216
-
     private double currentLeftEncoderRotation = 0;
     private double currentRightEncoderRotation = 0;
     private double currentRearEncoderRotation = 0;
-    private double leftEncoderRotation = 0;
-    private double rightEncoderRotation = 0;
-    private double rearEncoderRotation = 0;
-
-    private BNO055IMU imu1;
-
-    private double lastAngles;
-    private double globalAngle;
+    private IMUController imu;
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
 
@@ -76,13 +66,15 @@ public class AutoFunctions extends LinearOpMode {
     @Override
     public void runOpMode()
     {
-        IMUInit();
+        imu = new IMUController(hardwareMap);
+        Expansion_Hub_1 = imu.Expansion_Hub_1;
+        Expansion_Hub_2 = imu.Expansion_Hub_2;
         Initialize();
-        ResetAngle();
+        imu.ResetAngle();
         waitForStart();
         SetLiftTarget(-1);
         CloseClaw();
-        ResetAngle();
+        imu.ResetAngle();
         CheckForModel();
         //region end state as an integer value
         /*
@@ -310,6 +302,12 @@ public class AutoFunctions extends LinearOpMode {
         double zDist = Z;
 
         //region X checks
+        double rearEncoderRotation = 0;
+        double rightEncoderRotation = 0;
+        double leftEncoderRotation = 0;
+        int cpr = 8192;
+        //(Math.PI) * (diameter / 2);//6.1575216
+        double c = 6.1575216;
         if(xDist != 0 && zDist == 0)
         {
             while (xDist < -.045f || xDist > .045f && opModeIsActive())
@@ -336,8 +334,8 @@ public class AutoFunctions extends LinearOpMode {
                 float delta = (float) (X - totalMovementX) / 3;
                 delta = Range(delta,-1,1);
 
-                float turnMod = (float) AngleDeviation(0) / 20;
-                telemetry.addData("angle: ", GetAngle());
+                float turnMod = (float) imu.AngleDeviation(0) / 20;
+                telemetry.addData("angle: ", imu.GetAngle());
                 telemetry.addData("Z: ", coordZ);
                 telemetry.addData("X ", coordX);
                 telemetry.update();
@@ -374,9 +372,9 @@ public class AutoFunctions extends LinearOpMode {
                 float delta = (float) (Z - totalMovementZ) / 3;
                 delta = Range(delta,-1,1);
 
-                float turnMod = (float) AngleDeviation(0) / 20;
+                float turnMod = (float) imu.AngleDeviation(0) / 20;
 
-                telemetry.addData("angle: ", GetAngle());
+                telemetry.addData("angle: ", imu.GetAngle());
                 telemetry.addData("Z: ", coordZ);
                 telemetry.addData("X ", coordX);
                 telemetry.update();
@@ -438,18 +436,18 @@ public class AutoFunctions extends LinearOpMode {
     //endregion
 
     private void SnapToHeading(float target, float speed){
-        float deltaNC = (float) (target - GetAngle());
+        float deltaNC = (float) (target - imu.GetAngle());
         while (deltaNC > .01f || deltaNC < -.01f)
         {
-            deltaNC = (float) (target - GetAngle());
-            float delta = (float) (target - GetAngle()) / 3;
+            deltaNC = (float) (target - imu.GetAngle());
+            float delta = (float) (target - imu.GetAngle()) / 3;
 
             driveTrainCode.UpdateDriveTrain(new Vector3(0, speed * delta, 0));
-            telemetry.addData("CurrentHeading: ", GetAngle());
+            telemetry.addData("CurrentHeading: ", imu.GetAngle());
             telemetry.update();
         }
         driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
-        ResetAngle();
+        imu.ResetAngle();
     }
 
     void CheckEndPoint(String label)
@@ -693,99 +691,4 @@ public class AutoFunctions extends LinearOpMode {
 
 
     }
-
-    private double AngleDeviation(double target){
-        return target - GetAngle();
-    }
-
-    /*
-     * function that checks to see if the IMU is calibrated
-     */
-    private boolean IMU_Calibrated() {
-        telemetry.addData("IMU Calibration Status", imu1.getCalibrationStatus());
-        telemetry.addData("Gyro Calibrated", imu1.isGyroCalibrated() ? "True" : "False");
-        telemetry.addData("System Status", imu1.getSystemStatus().toString());
-        return imu1.isGyroCalibrated();
-    }
-
-    /*
-     * contains all of the IMU initialization routines
-     */
-    private void IMUInit() {
-        Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
-        Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
-        imu1 = hardwareMap.get(BNO055IMU.class,"imu");
-        BNO055IMU.Parameters IMU_Parameters;
-
-        IMU_Parameters = new BNO055IMU.Parameters();
-        // Set the IMU sensor mode to IMU. This mode uses
-        // the IMU gyroscope and accelerometer to
-        // calculate the relative orientation of hub and
-        // therefore the robot.
-        IMU_Parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        IMU_Parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        IMU_Parameters.mode = BNO055IMU.SensorMode.IMU;
-        // Initialize the IMU using parameters object.
-        imu1.initialize(IMU_Parameters);
-        imu1.startAccelerationIntegration(new Position(), new Velocity(), 1000);
-        // Report the initialization to the Driver Station
-        telemetry.addData("Status", "IMU initialized, calibration started.");
-        telemetry.update();
-        // Wait one second to ensure the IMU is ready.
-        sleep(1000);
-        // Loop until IMU has been calibrated.
-        while (!IMU_Calibrated() && opModeIsActive()) {
-            telemetry.addData("If calibration ", "doesn't complete after 3 seconds, move through 90 degree pitch, roll and yaw motions until calibration complete ");
-            telemetry.update();
-            // Wait one second before checking calibration
-            // status again.
-            sleep(1000);
-        }
-        // Report calibration complete to Driver Station.
-        telemetry.addData("Status", "Calibration Complete");
-    }
-
-    /*
-     * Resets the cumulative angle tracking to zero.
-     */
-    private void ResetAngle()
-    {
-        lastAngles = imu1.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-
-        globalAngle = 0;
-    }
-
-    /*
-     * Get current cumulative angle rotation from last reset.
-     * @return Angle in degrees. - = left, + = right.
-     */
-    private double GetAngle()
-    {
-        /* We  determined the Y axis is the axis we want to use for heading angle.
-         * We have to process the angle because the imu works in euler angles so the Y axis is
-         * returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
-         * 180 degrees. We detect this transition and track the total cumulative angle of rotation.
-         */
-
-        double angles = imu1.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-
-        double deltaAngle = angles - lastAngles;
-
-        //angles += 180;
-        if (deltaAngle < -180)
-        {
-            deltaAngle += 360;
-        }
-        else if (deltaAngle > 180)
-        {
-            deltaAngle -= 360;
-        }
-
-        globalAngle += deltaAngle;
-
-        lastAngles = angles;
-
-        return globalAngle;
-    }
-
 }
