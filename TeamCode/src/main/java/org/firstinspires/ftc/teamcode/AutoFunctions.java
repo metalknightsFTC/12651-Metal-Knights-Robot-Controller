@@ -60,12 +60,13 @@ public class AutoFunctions extends LinearOpMode {
         Expansion_Hub_1 = imu.Expansion_Hub_1;
         Expansion_Hub_2 = imu.Expansion_Hub_2;
         Initialize();
-        imu.ResetAngle();
         waitForStart();
         SetLiftTarget(-1);
         CloseClaw();
         imu.ResetAngle();
-        CheckForModel();
+        Move(48,0,1f);
+        Move(0,48,1f);
+        //CheckForModel();
         //region end state as an integer value
         /*
         case 0 = red left 1
@@ -85,8 +86,8 @@ public class AutoFunctions extends LinearOpMode {
         case 11 = blue right 3
          */
         //endregion
-        SetRoutine();
-        RunRoutine();
+        //SetRoutine();
+        //RunRoutine();
     }
 
     //region From start to end position
@@ -302,6 +303,13 @@ public class AutoFunctions extends LinearOpMode {
         int tpr = 8192;//found on REV encoder specs chart
         double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
 
+        float rampDown = 3;
+
+        if(speed > .6f)
+        {
+            rampDown = 18;
+        }
+
         //region X checks
         if(xDist != 0 && zDist == 0)
         {
@@ -326,7 +334,7 @@ public class AutoFunctions extends LinearOpMode {
 
                 xDist = X - totalMovementX;
 
-                float delta = (float) (X - totalMovementX) / 3;
+                float delta = (float) (X - totalMovementX) / rampDown;
                 delta = Range(delta,-1,1);
 
                 float turnMod = (float) imu.AngleDeviation(0) / 20;
@@ -366,7 +374,7 @@ public class AutoFunctions extends LinearOpMode {
 
                 zDist = Z - totalMovementZ;
 
-                float delta = (float) (Z - totalMovementZ) / 3;
+                float delta = (float) (Z - totalMovementZ) / rampDown;
                 delta = Range(delta,-1,1);
 
                 float turnMod = (float) imu.AngleDeviation(0) / 20;
@@ -433,7 +441,7 @@ public class AutoFunctions extends LinearOpMode {
 
     private void SnapToHeading(float target, float speed){
         float deltaNC = (float) (target - imu.GetAngle());
-        while (deltaNC > .01f || deltaNC < -.01f)
+        while (deltaNC > .04f || deltaNC < -.04f)
         {
             deltaNC = (float) (target - imu.GetAngle());
             float delta = (float) (target - imu.GetAngle()) / 3;
@@ -616,7 +624,7 @@ public class AutoFunctions extends LinearOpMode {
         SetLiftTarget(0);
         sleep(500);
 
-        Move(12.15f,0f,.5f);
+        Move(13.15f,0f,.5f);
         sleep(500);
         Move(0,3.1f,.4f);
         sleep(500);

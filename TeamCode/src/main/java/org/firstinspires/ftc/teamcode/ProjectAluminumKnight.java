@@ -144,9 +144,22 @@ public class ProjectAluminumKnight extends LinearOpMode {
 
     public  float StrafeCorrection()
     {
-        float turnMod = (float) imu.AngleDeviation(0)/20;
+        float turnMod = (float) imu.AngleDeviation(0) / 20;
+        turnMod = Range(turnMod,-1,1);
         return -turnMod;
     }
 
+    //region lock input between 2 numbers
+    private float Range(float in,float lower, float upper){
+        float out = in;
+        if(out < lower){
+            out = lower;
+        }
+        if(out > upper){
+            out = upper;
+        }
+        return out;
+    }
+    //endregion
 
 }
