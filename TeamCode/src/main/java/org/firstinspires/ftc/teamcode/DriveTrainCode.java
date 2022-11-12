@@ -8,23 +8,20 @@ import org.firstinspires.ftc.teamcode.Vectors.*;
 import org.firstinspires.ftc.teamcode.Enums.Motor;
 
 public class DriveTrainCode {
-
+    //Gamepad inputs
     public double LSX;
     public double LSY;
     public double RSX;
+    //References to the motors
     private  DcMotor frontRight;
     private  DcMotor frontLeft;
-
     private  DcMotor backRight;
     private  DcMotor backLeft;
+
     //local reference to gamepad 1 passed by ref to constructor
     private Gamepad lGpad;
+    //local hardware map
     HardwareMap lHardwareMap;
-    //double speed = 1;
-    public float frTicks;
-    public float brTicks;
-    public float flTicks;
-    public float blTicks;
 
     public  DriveTrainCode(Gamepad gamepad , HardwareMap hardwareMap)
     {
@@ -45,12 +42,17 @@ public class DriveTrainCode {
 
     private  void UpdateMecanum(float speed, float strafeCorrection)
     {
+        //TeleOp for mecanum drive code applying more or less power to the turn section to counter drift
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        frontLeft.setPower(((LSY)-(RSX+strafeCorrection)-(LSX)) * speed);
-        backLeft.setPower(((LSY)-(RSX+strafeCorrection)+(LSX)) * speed);
+        frontLeft.setPower(((LSY) - (RSX + strafeCorrection) - (LSX)) * speed);
+        backLeft.setPower(((LSY) - (RSX + strafeCorrection) + (LSX)) * speed);
 
-        frontRight.setPower(((LSY)+(RSX+strafeCorrection)+(LSX)) * speed);
-        backRight.setPower(((LSY)+(RSX+strafeCorrection)-(LSX)) * speed);
+        frontRight.setPower(((LSY) + (RSX + strafeCorrection) + (LSX)) * speed);
+        backRight.setPower(((LSY) + (RSX + strafeCorrection) - (LSX)) * speed);
     }
 
     public  void InvertMotorDirection(Motor selectedMotor)
@@ -68,20 +70,16 @@ public class DriveTrainCode {
 
     private void  SimulateStick(float x, float y, float t)
     {
-        frontLeft.setPower((y)+(t)+(x));
-        backLeft.setPower(((y)+(t)-(x)));
-        frontRight.setPower(((y)-(t)-(x)));
-        backRight.setPower(((y)-(t)+(x)));
-
-        frTicks = frontRight.getCurrentPosition();
-        brTicks = backRight.getCurrentPosition();
-
-        flTicks = frontLeft.getCurrentPosition();
-        blTicks = backLeft.getCurrentPosition();
+        //autonomous drive code. the drift correction is done on the t input in the autonomous code
+        frontLeft.setPower((y) + (t) + (x));
+        backLeft.setPower(((y) + (t) - (x)));
+        frontRight.setPower(((y) - (t) - (x)));
+        backRight.setPower(((y) - (t) + (x)));
     }
 
     private void UpdateInput()
     {
+        //apply a dead-zone to the input
         LSX = Math.pow(lGpad.left_stick_x, 3);
         LSY = Math.pow(lGpad.left_stick_y, 3);
         RSX = lGpad.right_stick_x;
@@ -89,6 +87,7 @@ public class DriveTrainCode {
 
     private  void  InitializeHardware(HardwareMap hardwareMap)
     {
+        //initializes and sets up all the hardware
         lHardwareMap = hardwareMap;
         frontRight = lHardwareMap.get(DcMotor.class, "frontRight");
         frontLeft = lHardwareMap.get(DcMotor.class, "frontLeft");
@@ -110,6 +109,7 @@ public class DriveTrainCode {
 
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
     }
 
     private  void InitializeGamepad(Gamepad gpad)

@@ -33,7 +33,7 @@ public class IMUController {
     /*
      * function that checks to see if the IMU is calibrated
      */
-    private boolean IMU_Calibrated() {
+    public boolean IMU_Calibrated() {
         return imu1.isGyroCalibrated();
     }
 

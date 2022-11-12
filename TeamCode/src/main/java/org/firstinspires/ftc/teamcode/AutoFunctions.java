@@ -1,12 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.function.Consumer;
+import org.firstinspires.ftc.robotcore.external.function.Continuation;
+import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.Enums.EndPoint;
@@ -33,12 +38,21 @@ public class AutoFunctions extends LinearOpMode {
     private DcMotor lift;
     private Servo grabber;
     private DriveTrainCode driveTrainCode;
+    private PathMaster pathMaster;
 
+    private static WebcamName camera;
     private int routine = 0;
+
+    public FtcDashboard dashboard;
 
     private IMUController imu;
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
+    public static int tpr = 8192;//found on REV encoder specs chart
+    public static double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
+
+    public static float rampDown = 4.5f;
+
 
     @SuppressLint("SdCardPath")
     private static final String TFOD_MODEL_ASSET =  /*"PowerPlay.tflite";*/
@@ -56,17 +70,21 @@ public class AutoFunctions extends LinearOpMode {
     @Override
     public void runOpMode()
     {
+        dashboard = FtcDashboard.getInstance();
         imu = new IMUController(hardwareMap);
+        while(!imu.IMU_Calibrated()){
+            telemetry.addData("IMU STATUS: ","Calibrating");
+            telemetry.update();
+        }
         Expansion_Hub_1 = imu.Expansion_Hub_1;
         Expansion_Hub_2 = imu.Expansion_Hub_2;
         Initialize();
+        pathMaster = new PathMaster();
         waitForStart();
         SetLiftTarget(-1);
         CloseClaw();
         imu.ResetAngle();
-        Move(48,0,1f);
-        Move(0,48,1f);
-        //CheckForModel();
+        CheckForModel();
         //region end state as an integer value
         /*
         case 0 = red left 1
@@ -86,38 +104,32 @@ public class AutoFunctions extends LinearOpMode {
         case 11 = blue right 3
          */
         //endregion
-        //SetRoutine();
-        //RunRoutine();
+        imu.ResetAngle();
+        SetRoutine();
+        RunRoutine();
     }
 
-    //region From start to end position
+    //region Run the Autonomous
     private void  RunRoutine() {
         switch (routine) {
             case 0:
                 //region Red Left Case 0 Sword code
                 RedLeftSideDropPreload();
-                sleep(500);
                 //move to parking
-                Move(33,0f,.6f);
-                sleep(500);
-                Move(0,41f,.6f);
+                sleep(100);
+                Move(0,26f,.6f);
                 //endregion
                 break;
             case 1:
                 //region Red Left Case 1 helmet code
                 RedLeftSideDropPreload();
-                sleep(500);
-                Move(33,0f,.6f);
-                sleep(500);
-                Move(0,18f,.6f);
+                sleep(100);
+                Move(0,1f,.6f);
                 //endregion
                 break;
             case 2:
                 //region Red Left Case 2 Shield code
                 RedLeftSideDropPreload();
-                sleep(500);
-                Move(33,0f,.6f);
-                sleep(500);
                 //endregion
                 break;
             case 3:
@@ -130,19 +142,15 @@ public class AutoFunctions extends LinearOpMode {
             case 4:
                 //region Red Right 2 Helmet code
                 RedRightSideDropPreload();
-                sleep(500);
-                Move(10,0,.6f);
-                sleep(500);
-                Move(0,-24,.6f);
+                sleep(100);
+                Move(0,1.5f,.4f);
                 //endregion
                 break;
             case 5:
                 //region Red Right 2 Shield code
                 RedRightSideDropPreload();
-                sleep(500);sleep(500);
-                Move(10,0,.6f);
                 sleep(500);
-                Move(0,-40f,.6f);
+                Move(0,-16,.4f);
                 //endregion
                 break;
             case 6:
@@ -156,19 +164,16 @@ public class AutoFunctions extends LinearOpMode {
                 break;
             case 9:
                 BlueRightSideDropPreload();
-                Move(0,21,.6f);
-                Move(30,0,.6f);
                 break;
             case 10:
                 BlueRightSideDropPreload();
-                Move(0,21,.6f);
-                Move(40,0,.6f);
-                Move(0,-20,.6f);
+                sleep(100);
+                Move(0,2,.4f);
                 break;
             case 11:
                 BlueRightSideDropPreload();
-                Move(0,-21,.6f);
-                Move(30,0,.6f);
+                sleep(100);
+                Move(0,-16f,.4f);
                 break;
             default:
                 break;
@@ -256,13 +261,13 @@ public class AutoFunctions extends LinearOpMode {
 
         switch (level) {
             case 0:
-                targetRotations = (538 * 4);
+                targetRotations = 1776;
                 break;
             case 1:
-                targetRotations = (int)(538 * 5.5);
+                targetRotations = 2906;
                 break;
             case 2:
-                targetRotations = 4650;
+                targetRotations = 4150;
                 break;
             default:
                 break;
@@ -270,23 +275,25 @@ public class AutoFunctions extends LinearOpMode {
 
         lift.setTargetPosition(targetRotations);
         lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        lift.setPower(0.65);
+        lift.setPower(1);
     }
 //endregion
 
-    double coordZ = 0;
-    double coordX = 0;
+    double coordinateZ = 0;
+    double coordinateX = 0;
 
     //Drive x inches in selected direction at selected speed using odometry to record distance and the internal measuring unit(IMU) to correct for drift
     //slows down after a threshold is reached
     //region Movement code
-    public void Move(float X, float Z, float speed){
+    double totalMovementX = 0;
+    double totalMovementZ = 0;
+
+    public void DiagonalMove(float X, float Z, float speed)
+    {
         //how far the robot has left to move
         double xDist = X;
         double zDist = Z;
         //how far the robot has moved so far
-        double totalMovementX = 0;
-        double totalMovementZ = 0;
         //previously measured encoder positions
         double rearEncoderRotation;
         double rightEncoderRotation;
@@ -300,21 +307,12 @@ public class AutoFunctions extends LinearOpMode {
         double deltaRight;
         double deltaBack;
         //ticks per revolution
-        int tpr = 8192;//found on REV encoder specs chart
-        double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
-
-        float rampDown = 3;
-
         if(speed > .6f)
         {
-            rampDown = 18;
+            rampDown = 20;
         }
-
-        //region X checks
-        if(xDist != 0 && zDist == 0)
-        {
-            while (xDist < -.045f || xDist > .045f && opModeIsActive())
-            {
+        //region checks
+        while (xDist < -.08f || xDist > .08f || zDist < -.08f || zDist > .08f && opModeIsActive()) {
                 //region Odometry Math
                 leftEncoderRotation = currentLeftEncoderRotation;
                 rightEncoderRotation = currentRightEncoderRotation;
@@ -333,27 +331,89 @@ public class AutoFunctions extends LinearOpMode {
                 totalMovementX += deltaBack;
 
                 xDist = X - totalMovementX;
-
-                float delta = (float) (X - totalMovementX) / rampDown;
-                delta = Range(delta,-1,1);
+                zDist = Z - totalMovementZ;
+                float deltaX = (float) (X - totalMovementX) / rampDown;
+                deltaX = Range(deltaX, -1, 1);
+                float deltaZ = (float) (Z - totalMovementZ) / rampDown;
+                deltaZ = Range(deltaZ, -1, 1);
 
                 float turnMod = (float) imu.AngleDeviation(0) / 20;
 
                 telemetry.addData("Global Heading: ", imu.heading);
-                telemetry.addData("Z: ", coordZ);
-                telemetry.addData("X ", coordX);
+                telemetry.addData("Z: ", zDist);
+                telemetry.addData("X ", xDist);
                 telemetry.update();
 
-                driveTrainCode.UpdateDriveTrain(new Vector3(speed * delta, -turnMod*speed, 0));
-            }
+                driveTrainCode.UpdateDriveTrain(new Vector3(speed * deltaX, -turnMod * speed, speed * deltaZ));
         }
         //endregion
+        totalMovementX = 0;
+        totalMovementZ = 0;
+        driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
+    }
 
-        //region Z checks
-        if(xDist == 0 && zDist != 0)
+    public void Move(float X, float Z, float speed){
+        //how far the robot has left to move
+        double xDist = X;
+        double zDist = Z;
+        //how far the robot has moved so far
+        //previously measured encoder positions
+        double rearEncoderRotation;
+        double rightEncoderRotation;
+        double leftEncoderRotation;
+        //currently measured encoder rotation
+        double currentLeftEncoderRotation = 0;
+        double currentRightEncoderRotation = 0;
+        double currentRearEncoderRotation = 0;
+        //the distance between the current encoder positions and the previous encoder positions
+        double deltaLeft;
+        double deltaRight;
+        double deltaBack;
+        //ticks per revolution
+        if(speed > .6f)
         {
-            while (zDist < -.045f || zDist > .045f && opModeIsActive())
-            {
+            rampDown = 20;
+        }
+        if(xDist != 0 && zDist == 0)
+        {
+            //region X checks
+            while (xDist < -.035f || xDist > .035f && opModeIsActive()) {
+                //region Odometry Math
+                leftEncoderRotation = currentLeftEncoderRotation;
+                rightEncoderRotation = currentRightEncoderRotation;
+                rearEncoderRotation = currentRearEncoderRotation;
+
+                currentRightEncoderRotation = right.getCurrentPosition();
+                currentRearEncoderRotation = rear.getCurrentPosition();
+                currentLeftEncoderRotation = left.getCurrentPosition();
+
+                deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / tpr) * c;
+                deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / tpr) * c;
+                deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
+                //endregion
+
+                totalMovementZ += (deltaLeft + deltaRight) / 2;
+                totalMovementX += deltaBack;
+
+                xDist = X - totalMovementX;
+                zDist = Z - totalMovementZ;
+                float delta = (float) (X - totalMovementX) / rampDown;
+                delta = Range(delta, -1, 1);
+
+                float turnMod = (float) imu.AngleDeviation(0) / 20;
+
+                telemetry.addData("Global Heading: ", imu.heading);
+                telemetry.addData("Z: ", zDist);
+                telemetry.addData("X ", xDist);
+                telemetry.update();
+
+                driveTrainCode.UpdateDriveTrain(new Vector3(speed * delta, -turnMod * speed, 0));
+            }
+            //endregion
+        }else if(zDist != 0 && xDist == 0)
+        {
+            //region Z checks
+            while (zDist < -.035f || zDist > .035f && opModeIsActive()) {
 
                 //region Odometry math
                 leftEncoderRotation = currentLeftEncoderRotation;
@@ -373,24 +433,23 @@ public class AutoFunctions extends LinearOpMode {
                 totalMovementX += deltaBack;
 
                 zDist = Z - totalMovementZ;
-
+                xDist = X - totalMovementX;
                 float delta = (float) (Z - totalMovementZ) / rampDown;
-                delta = Range(delta,-1,1);
+                delta = Range(delta, -1, 1);
 
                 float turnMod = (float) imu.AngleDeviation(0) / 20;
 
                 telemetry.addData("Global Heading: ", imu.heading);
-                telemetry.addData("Z: ", coordZ);
-                telemetry.addData("X ", coordX);
+                telemetry.addData("Z: ", zDist);
+                telemetry.addData("X ", xDist);
                 telemetry.update();
 
                 driveTrainCode.UpdateDriveTrain(new Vector3(0, -turnMod * speed, speed * delta));
             }
+            //endregion
         }
-        //endregion
-
-        coordX += totalMovementX;
-        coordZ += totalMovementZ;
+        totalMovementX = 0;
+        totalMovementZ = 0;
         driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
     }
     //endregion
@@ -511,11 +570,11 @@ public class AutoFunctions extends LinearOpMode {
     }
 
     private void OpenClaw(){
-        grabber.setPosition(.22f);
+        grabber.setPosition(.15f);
     }
 
     private void CloseClaw(){
-        grabber.setPosition(.32f);
+        grabber.setPosition(.33f);
     }
 
     private void InitVuforia()
@@ -558,7 +617,6 @@ public class AutoFunctions extends LinearOpMode {
 
         driveTrainCode = new DriveTrainCode(gamepad1 ,hardwareMap);
 
-        //driveTrainCode.InvertMotorDirection(Motor.frontLeft);
         driveTrainCode.InvertMotorDirection(Motor.backRight);
         driveTrainCode.InvertMotorDirection(Motor.frontRight);
 
@@ -579,11 +637,17 @@ public class AutoFunctions extends LinearOpMode {
         InitVuforia();
         InitTfod();
 
-        if(startPoint == StartPoint.left){
-            telemetry.addData("Path Set ", "Start: Left");
-        }else if(startPoint == StartPoint.right){
-            telemetry.addData("Path Set ", "Start: Right");
+        if(startPoint == StartPoint.redLeft){
+            telemetry.addData("Path Set ", "Start: Red Left");
+        }else if(startPoint == StartPoint.redRight){
+            telemetry.addData("Path Set ", "Start: Red Right");
+        }else if(startPoint == StartPoint.blueLeft){
+            telemetry.addData("Path Set ", "Start: Blue Left");
+        }else if(startPoint == StartPoint.blueRight){
+            telemetry.addData("Path Set ", "Start: Blue Right");
         }
+
+        telemetry.addData("IMU STATUS: ","Calibrated");
         telemetry.addData("Status: ", "Initialized");
         telemetry.update();
 
@@ -618,79 +682,75 @@ public class AutoFunctions extends LinearOpMode {
         //pushback from wall
         Move(3.5f,0f,.4f);
         //go to junction and lift
-        sleep(500);
-        Move(0,-15f,.5f);
-
+        sleep(100);
+        Move(0,-14.4f,.4f);
+        sleep(100);
         SetLiftTarget(0);
-        sleep(500);
-
-        Move(13.15f,0f,.5f);
-        sleep(500);
-        Move(0,3.1f,.4f);
-        sleep(500);
+        sleep(100);
+        DiagonalMove(17f,-14.4f,.4f);
+        sleep(100);
         OpenClaw();
-        sleep(500);
-
-        Move(0,-4.7f,.4f);
-
-        sleep(500);
-        CloseClaw();
-        sleep(500);
+        sleep(100);
+        Move(0,-16f,.5f);
+        sleep(100);
         SetLiftTarget(-1);
-        sleep(500);
+        sleep(100);
+        DiagonalMove(49f,-16f, .55f);
     }
 
     private void RedRightSideDropPreload()
     {
         //pull off of wall
         Move(3.5f,0,.4f);
-        sleep(500);
+        sleep(100);
         //drive to the entrypoint
-        Move(0,25f,.5f);
+        Move(0,28f,.5f);
 
-        sleep(500);
+        sleep(100);
         SetLiftTarget(2);
-        sleep(500);
+        sleep(100);
 
-        Move(35.5f,0,.5f);
-        sleep(500);
-        Move(0,8.3f,.4f);
+        DiagonalMove(40.7f,28,.5f);
+        sleep(100);
+        Move(0,31.7f,.4f);
+        //sleep(100);
         OpenClaw();
-        sleep(500);
-        Move(0,-8.3f,.4f);
-
-        sleep(500);
+        sleep(100);
+        Move(0,28f,.4f);
+        sleep(100);
         SetLiftTarget(-1);
-        sleep(500);
-
-        CloseClaw();
-        sleep(500);
+        sleep(100);
+        DiagonalMove(49f,27,.4f);
+        sleep(100);
     }
 
     private void BlueLeftSideDropPreload()
     {
         Move(3.5f,0,.4f);
         sleep(500);
+
     }
 
     private void BlueRightSideDropPreload()
     {
         Move(3.5f,0f,.4f);
-        sleep(500);
-        Move(0f,6.5f,.5f);
-        sleep(500);
+        sleep(100);
+        Move(0f,7.1f,.5f);
+        sleep(100);
         SetLiftTarget(0);
-        sleep(500);
-        Move(12f,0f,.5f);
-        sleep(500);
-        Move(0f,3.5f,.4f);
-        sleep(500);
+        sleep(100);
+        DiagonalMove(18.35f,7.1f,.5f);
+        sleep(100);
         OpenClaw();
-        sleep(500);
-        Move(0,-4.5f,.4f);
-        sleep(500);
+        sleep(100);
+        Move(0,5.5f,.4f);
+        sleep(100);
+        DiagonalMove(3.5f,5.5f,.5f);
+        sleep(100);
         SetLiftTarget(-1);
-        sleep(500);
-        Move(-12,0,.5f);
+        sleep(100);
+        Move(0,26.5f,.4f);
+        sleep(100);
+        DiagonalMove(49,26.5f,.5f);
     }
 }
