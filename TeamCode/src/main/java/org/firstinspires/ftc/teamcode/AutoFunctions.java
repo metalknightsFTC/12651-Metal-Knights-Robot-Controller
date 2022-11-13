@@ -120,6 +120,7 @@ public class AutoFunctions extends LinearOpMode {
                 Move(0,26f,.6f);
                 //endregion
                 break;
+
             case 1:
                 //region Red Left Case 1 helmet code
                 RedLeftSideDropPreload();
@@ -150,7 +151,7 @@ public class AutoFunctions extends LinearOpMode {
                 //region Red Right 2 Shield code
                 RedRightSideDropPreload();
                 sleep(500);
-                Move(0,-16,.4f);
+                Move(0,-17,.4f);
                 //endregion
                 break;
             case 6:
@@ -173,7 +174,7 @@ public class AutoFunctions extends LinearOpMode {
             case 11:
                 BlueRightSideDropPreload();
                 sleep(100);
-                Move(0,-16f,.4f);
+                Move(0,-17f,.4f);
                 break;
             default:
                 break;
