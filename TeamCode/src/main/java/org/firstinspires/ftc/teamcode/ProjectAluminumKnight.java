@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
@@ -27,33 +28,138 @@ public class ProjectAluminumKnight extends LinearOpMode {
     DcMotor lift;
     Servo grabber;
     private IMUController imu;
-    Orientation angles;
-    Acceleration gravity;
-    private DcMotorEx right;
-    private DcMotorEx left;
-    private DcMotorEx rear;
     DriveTrainCode driveTrainCode;
 
     private int targetRotations = 0;
     public static float currentSpeed = .6f;
     public static float slowSpeed = .3f;
     public static float regularSpeed = .6f;
-    public static int tpr = 8192;//found on REV encoder specs chart
-    public static double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
-    float l;
-    public static float rampDown = 4.5f;
+    public static float fastSpeed = .8f;
+    public static TouchSensor poleContact;
 
-    public  static float coordinateX;
-    public  static float coordinateZ;
-
-    Servo pivot;
-    Servo alignment;
+    Servo verticalR;
+    Servo horizontalR;
 
     int level;
     int[] liftHeights = new int[8];
 
     @Override
-    public void runOpMode(){
+    public void runOpMode()
+    {
+        Initialize();
+        waitForStart();
+        RunLoop();
+    }
+
+    public void RunLoop()
+    {
+        while (opModeIsActive())
+        {
+            verticalR.setPosition(.27);
+            //pivot.setPosition(.75);
+            horizontalR.setPosition(0);
+
+            SpeedAndDrive();
+            ManageLiftLevel();
+            //Contact();
+            //region Grabber Code
+            if(gamepad1.left_bumper){
+                grabber.setPosition(0.13f);
+            }else{
+                grabber.setPosition(.33f);
+            }
+            //endregion
+
+            imu.GetAngle();
+            telemetry.addData("Angle : ", imu.heading);
+            telemetry.addData("Lift Target: ", ((double)targetRotations));
+            telemetry.addData("Current Lift Position: ", lift.getCurrentPosition());
+            telemetry.update();
+            //endregion
+        }
+    }
+    public void SpeedAndDrive()
+    {
+        if(gamepad1.right_bumper)
+        {
+            currentSpeed = slowSpeed;
+        }else if(gamepad1.left_stick_button)
+        {
+            currentSpeed = fastSpeed;
+        }else
+        {
+            currentSpeed = regularSpeed;
+        }
+        if(driveTrainCode.RSX >= 0.001 || driveTrainCode.RSX <= -0.001 || !(driveTrainCode.LSX > 0.02f || driveTrainCode.LSX < -0.02f))
+        {
+            imu.ResetAngle();
+        }
+        driveTrainCode.UpdateDriveTrain(currentSpeed, StrafeCorrection());
+    }
+
+    public void ManageLiftLevel()
+    {
+        //region lifter buttons
+        //538
+
+        if(gamepad1.dpad_right){
+            level = 4;
+            targetRotations = liftHeights[level];
+        }
+        if(gamepad1.dpad_left) {
+            level = 2;
+            targetRotations = liftHeights[level];
+        }
+        if(gamepad1.dpad_up){
+            level = 3;
+            targetRotations = liftHeights[level];
+        }
+        if(gamepad1.dpad_down){
+            level = 1;
+            targetRotations = liftHeights[level];
+        }
+        if(gamepad1.a){
+            level = 5;
+            targetRotations = liftHeights[level];
+        }
+        if(gamepad1.x){
+            level = 6;
+            targetRotations = liftHeights[level];
+        }
+        if(gamepad1.y){
+            level = 7;
+            targetRotations = liftHeights[level];
+        }
+        if(gamepad1.b){
+            level = 0;
+            targetRotations = liftHeights[level];
+        }
+        //endregion
+
+        //region lifter code
+        targetRotations += (gamepad1.right_trigger - gamepad1.left_trigger) * 20;
+        if(targetRotations < 0){
+            targetRotations = 0;
+        }
+        if(targetRotations > 4200){
+            targetRotations = 4200;
+        }
+
+        lift.setTargetPosition(targetRotations);
+        lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        lift.setPower(1);
+    }
+
+    public void Contact()
+    {
+        if(poleContact.isPressed()){
+            gamepad1.rumble(.5,.5,100);
+        }else{
+            gamepad1.stopRumble();
+        }
+    }
+
+    public void Initialize(){
         liftHeights[7] = 4150;
         liftHeights[6] = 2906;
         liftHeights[5] = 1776;
@@ -67,15 +173,11 @@ public class ProjectAluminumKnight extends LinearOpMode {
         Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
         imu = new IMUController(hardwareMap);
 
-        alignment = hardwareMap.get(Servo.class,"alignment");
-        pivot = hardwareMap.get(Servo.class,"pivot");
-        pivot.setDirection(Servo.Direction.REVERSE);
+        horizontalR = hardwareMap.get(Servo.class,"alignment");
+        verticalR = hardwareMap.get(Servo.class,"pivot");
         lift = hardwareMap.get(DcMotor.class,"lifter");
         grabber = hardwareMap.get(Servo.class,"grabber");
-        right = hardwareMap.get(DcMotorEx.class, "right");
-        left = hardwareMap.get(DcMotorEx.class, "left");
-        rear = hardwareMap.get(DcMotorEx.class, "rear");
-
+        //poleContact = hardwareMap.get(TouchSensor.class, "poleContact");
         driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
 
         driveTrainCode.InvertMotorDirection(Motor.backLeft);
@@ -90,114 +192,9 @@ public class ProjectAluminumKnight extends LinearOpMode {
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-
-        waitForStart();
-        while (opModeIsActive()){
-            pivot.setPosition(.27);
-            //pivot.setPosition(.75);
-            alignment.setPosition(0);
-            if(gamepad1.right_bumper)
-            {
-                currentSpeed = slowSpeed;
-            }else
-            {
-                currentSpeed = regularSpeed;
-            }
-                if(driveTrainCode.RSX >= 0.001 || driveTrainCode.RSX <= -0.001 || !(driveTrainCode.LSX > 0.02f || driveTrainCode.LSX < -0.02f))
-                {
-                    imu.ResetAngle();
-                }
-                driveTrainCode.UpdateDriveTrain(currentSpeed, StrafeCorrection());
-
-            //region lifter buttons
-            //538
-
-            if(gamepad1.dpad_right){
-                level = 4;
-                targetRotations = liftHeights[level];
-            }
-            if(gamepad1.dpad_left) {
-                level = 2;
-                targetRotations = liftHeights[level];
-            }
-            if(gamepad1.dpad_up){
-                level = 3;
-                targetRotations = liftHeights[level];
-            }
-            if(gamepad1.dpad_down){
-                level = 1;
-                targetRotations = liftHeights[level];
-            }
-            if(gamepad1.a){
-                level = 5;
-                targetRotations = liftHeights[level];
-            }
-            if(gamepad1.x){
-                level = 6;
-                targetRotations = liftHeights[level];
-            }
-            if(gamepad1.y){
-                level = 7;
-                targetRotations = liftHeights[level];
-            }
-            if(gamepad1.b){
-                level = 0;
-                targetRotations = liftHeights[level];
-            }
-            //endregion
-
-            //region lifter code
-            targetRotations += (gamepad1.right_trigger - gamepad1.left_trigger) * 20;
-            if(targetRotations < 0){
-                targetRotations = 0;
-            }
-            if(targetRotations > 4200){
-                targetRotations = 4200;
-            }
-
-            lift.setTargetPosition(targetRotations);
-            lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            lift.setPower(1);
-
-            if(gamepad1.left_bumper){
-                grabber.setPosition(0.13f);
-            }else{
-                grabber.setPosition(.33f);
-            }
-
-            imu.GetAngle();
-            telemetry.addData("Angle : ", imu.heading);
-            telemetry.addData("Lift Target: ", ((double)targetRotations));
-            telemetry.addData("Current Lift Position: ", lift.getCurrentPosition());
-            telemetry.update();
-            //endregion
-        }
-
     }
 
-    public  void LockToHeading(float target)
-    {
-        float deltaNC = (float) (target - imu.GetAngle());
-        float rampDown = 3;
-
-        if(currentSpeed > .6f)
-        {
-            rampDown = 18;
-        }
-
-        if (deltaNC > .04f || deltaNC < -.04f)
-        {
-            float delta = (float) (target - imu.GetAngle()) / rampDown;
-
-            driveTrainCode.UpdateDriveTrain(new Vector3(0, currentSpeed * delta, 0));
-            telemetry.addData("CurrentHeading: ", imu.GetAngle());
-            telemetry.update();
-        }
-        driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
-        imu.ResetAngle();
-    }
-
-    public  float StrafeCorrection()
+    public float StrafeCorrection()
     {
         float turnMod = (float) imu.AngleDeviation(0) / 20;
         turnMod = Range(turnMod,-1,1);
@@ -216,42 +213,4 @@ public class ProjectAluminumKnight extends LinearOpMode {
         return out;
     }
     //endregion
-
-    public void Odometry()
-    {
-        double totalMovementX = 0;
-        double totalMovementZ = 0;
-        //previously measured encoder positions
-        double rearEncoderRotation;
-        double rightEncoderRotation;
-        double leftEncoderRotation;
-        //currently measured encoder rotation
-        double currentLeftEncoderRotation = 0;
-        double currentRightEncoderRotation = 0;
-        double currentRearEncoderRotation = 0;
-        //the distance between the current encoder positions and the previous encoder positions
-        double deltaLeft;
-        double deltaRight;
-        double deltaBack;
-
-        leftEncoderRotation = currentLeftEncoderRotation;
-        rightEncoderRotation = currentRightEncoderRotation;
-        rearEncoderRotation = currentRearEncoderRotation;
-
-        currentRightEncoderRotation = right.getCurrentPosition();
-        currentRearEncoderRotation = rear.getCurrentPosition();
-        currentLeftEncoderRotation = left.getCurrentPosition();
-
-        deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / tpr) * c;
-        deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / tpr) * c;
-        deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
-        totalMovementZ += (deltaLeft + deltaRight) / 2;
-        totalMovementX += deltaBack;
-
-        coordinateX += totalMovementX;
-        coordinateZ += totalMovementZ;
-        telemetry.addData("X position: ", coordinateX);
-        telemetry.addData("Z position: ", coordinateZ);
-    }
-
 }

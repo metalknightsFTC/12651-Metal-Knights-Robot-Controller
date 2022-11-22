@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.function.Consumer;
 import org.firstinspires.ftc.robotcore.external.function.Continuation;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.SwitchableCamera;
 import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
@@ -38,12 +39,14 @@ public class AutoFunctions extends LinearOpMode {
     private DcMotor lift;
     private Servo grabber;
     private DriveTrainCode driveTrainCode;
-    private PathMaster pathMaster;
-    Servo pivot;
-    Servo alignment;
+    Servo verticalR;
+    Servo horizontalR;
 
-    private static WebcamName camera;
+    private static WebcamName webcam1;
+    private static  WebcamName webcam2;
+    private static SwitchableCamera switchableCamera;
     private int routine = 0;
+    public static double targetHeading = 0;
 
     public FtcDashboard dashboard;
 
@@ -55,8 +58,7 @@ public class AutoFunctions extends LinearOpMode {
     public static float rampDown = 3f;
 
     @SuppressLint("SdCardPath")
-    private static String TFOD_MODEL_ASSET =  /*"PowerPlay.tflite";*/
-            "/sdcard/FIRST/tflitemodels/model.tflite";
+    private static String TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/model.tflite";
 
     private static String[] LABELS = {
             "helmet",
@@ -79,13 +81,15 @@ public class AutoFunctions extends LinearOpMode {
         Expansion_Hub_1 = imu.Expansion_Hub_1;
         Expansion_Hub_2 = imu.Expansion_Hub_2;
         Initialize();
-        pathMaster = new PathMaster();
         waitForStart();
         SetCameraAngle(0, .27);
-        SetLiftTarget(-1);
+        //SetLiftTarget(-1);
         CloseClaw();
         imu.ResetAngle();
-        CheckForModel();
+        //CheckForModel();
+        Move(0,20,.4f);
+        SnapToHeading(90,.4f);
+        Move(0,20,.4f);
         //region end state as an integer value
         /*
         case 0 = red left 1
@@ -106,8 +110,8 @@ public class AutoFunctions extends LinearOpMode {
          */
         //endregion
         imu.ResetAngle();
-        SetRoutine();
-        RunRoutine();
+        //SetRoutine();
+        //RunRoutine();
     }
 
     //region Run the Autonomous
@@ -115,7 +119,7 @@ public class AutoFunctions extends LinearOpMode {
         switch (routine) {
             case 0:
                 //region Red Left Case 0 Sword code
-                RedLeftSideDropPreload();
+                RedLeftSide();
                 //move to parking
                 sleep(100);
                 Move(49,26f,.6f);
@@ -124,58 +128,58 @@ public class AutoFunctions extends LinearOpMode {
 
             case 1:
                 //region Red Left Case 1 helmet code
-                RedLeftSideDropPreload();
+                RedLeftSide();
                 sleep(100);
                 Move(49,2.7f,.6f);
                 //endregion
                 break;
             case 2:
                 //region Red Left Case 2 Shield code
-                RedLeftSideDropPreload();
+                RedLeftSide();
                 //endregion
                 break;
             case 3:
                 //region Red Right 1 Sword code
-                RedRightSideDropPreload();
+                RedRightSide();
                 sleep(5000);
                 //drive to position 1
                 //endregion
                 break;
             case 4:
                 //region Red Right 2 Helmet code
-                RedRightSideDropPreload();
+                RedRightSide();
                 sleep(100);
                 Move(49,3.5f,.4f);
                 //endregion
                 break;
             case 5:
                 //region Red Right 2 Shield code
-                RedRightSideDropPreload();
+                RedRightSide();
                 sleep(500);
                 Move(49,-17,.4f);
                 //endregion
                 break;
             case 6:
-                BlueLeftSideDropPreload();
+                BlueLeftSide();
                 Move(49,26.3f,.6f);
                 break;
             case 7:
-                BlueLeftSideDropPreload();
+                BlueLeftSide();
                 Move(49,3f,.6f);
                 break;
             case 8:
-                BlueLeftSideDropPreload();
+                BlueLeftSide();
                 break;
             case 9:
-                BlueRightSideDropPreload();
+                BlueRightSide();
                 break;
             case 10:
-                BlueRightSideDropPreload();
+                BlueRightSide();
                 sleep(100);
                 Move(49,2,.4f);
                 break;
             case 11:
-                BlueRightSideDropPreload();
+                BlueRightSide();
                 sleep(100);
                 Move(49,-18f,.4f);
                 break;
@@ -329,17 +333,17 @@ public class AutoFunctions extends LinearOpMode {
                 deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
                 //endregion
 
-                totalMovementZ += (deltaLeft + deltaRight) / 2;
-                totalMovementX += deltaBack;
+                totalMovementZ += (Math.cos(targetHeading) * ((deltaLeft + deltaRight) / 2)) + (Math.sin(targetHeading) * (deltaBack));
+                totalMovementX += (Math.sin(targetHeading) * ((deltaLeft + deltaRight) / 2)) + (Math.cos(targetHeading) * (deltaBack));
 
                 xDist = X - totalMovementX;
                 zDist = Z - totalMovementZ;
+
                 float deltaX = (float) (X - totalMovementX) / rampDown;
                 float deltaZ = (float) (Z - totalMovementZ) / rampDown;
                 deltaX = Range(deltaX, -1, 1);
                 deltaZ = Range(deltaZ, -1, 1);
-
-                float turnMod = (float) imu.AngleDeviation(0) / 20;
+                float turnMod = (float) imu.AngleDeviation(targetHeading) / 20;
 
                 telemetry.addData("Global Heading: ", imu.heading);
                 telemetry.addData("Z: ", zDist);
@@ -411,7 +415,7 @@ public class AutoFunctions extends LinearOpMode {
             telemetry.update();
         }
         driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
-        imu.ResetAngle();
+        targetHeading = imu.GetAngle();
     }
 
     void CheckEndPoint(String label)
@@ -471,8 +475,8 @@ public class AutoFunctions extends LinearOpMode {
     }
 
     private void SetCameraAngle(double x, double z){
-        pivot.setPosition(z);
-        alignment.setPosition(x);
+        verticalR.setPosition(z);
+        horizontalR.setPosition(x);
     }
 
     private void OpenClaw(){
@@ -485,13 +489,20 @@ public class AutoFunctions extends LinearOpMode {
 
     private void InitVuforia()
     {
-
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-
+        webcam1 = hardwareMap.get(WebcamName.class, "Webcam 1");
+        //webcam2 = hardwareMap.get(WebcamName.class, "Webcam 2");
+        //parameters.cameraName = ClassFactory.getInstance().getCameraManager().nameForSwitchableCamera(webcam1, webcam2);
+        parameters.cameraName = webcam1;
+        //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
+        // Set the active camera to Webcam 1.
+        //switchableCamera = (SwitchableCamera) vuforia.getCamera();
+        //if(switchableCamera!=null)
+        //{
+        //    switchableCamera.setActiveCamera(webcam1);
+        //}
     }
 
     private void InitTfod()
@@ -535,7 +546,12 @@ public class AutoFunctions extends LinearOpMode {
                 // step through the list of recognitions and display boundary info.
                 for (Recognition recognition : updatedRecognitions) {
                     telemetry.addData("Label: ", recognition.getLabel());
-                    getDistance(recognition);
+                    telemetry.addData("Left Bound: ",recognition.getLeft());
+                    telemetry.addData("Right Bound: ",recognition.getRight());
+                    telemetry.addData("Top Bound: ",recognition.getTop());
+                    telemetry.addData("Bottom Bound: ",recognition.getBottom());
+                    telemetry.update();
+                    //getDistance(recognition);
                     return true;
                 }
             }else
@@ -551,14 +567,16 @@ public class AutoFunctions extends LinearOpMode {
 
     private Vector2 getDistance(Recognition recognition)
     {
-        return new Vector2(0,0);
+        float x = 1;
+        float z = 1;
+        return new Vector2(x,z);
     }
 
     private void Initialize()
     {
 
-        alignment = hardwareMap.get(Servo.class,"alignment");
-        pivot = hardwareMap.get(Servo.class,"pivot");
+        horizontalR = hardwareMap.get(Servo.class,"alignment");
+        verticalR = hardwareMap.get(Servo.class,"pivot");
         lift = hardwareMap.get(DcMotor.class,"lifter");
         grabber = hardwareMap.get(Servo.class,"grabber");
 
@@ -628,7 +646,7 @@ public class AutoFunctions extends LinearOpMode {
         }
     }
 
-    private void RedLeftSideDropPreload()
+    private void RedLeftSide()
     {
         //pushback from wall
         Move(3.5f,0f,.4f);
@@ -649,7 +667,7 @@ public class AutoFunctions extends LinearOpMode {
         Move(49f,-16f, .55f);
     }
 
-    private void RedRightSideDropPreload()
+    private void RedRightSide()
     {
         //pull off of wall
         Move(3.5f,0,.4f);
@@ -675,7 +693,7 @@ public class AutoFunctions extends LinearOpMode {
         SetLiftTarget(-1);
     }
 
-    private void BlueLeftSideDropPreload()
+    private void BlueLeftSide()
     {
         //pushback from wall
         Move(3.5f,0f,.4f);
@@ -696,7 +714,7 @@ public class AutoFunctions extends LinearOpMode {
         Move(47.8f,-16f, .55f);
     }
 
-    private void BlueRightSideDropPreload()
+    private void BlueRightSide()
     {
         Move(3.5f,0f,.4f);
         sleep(100);
