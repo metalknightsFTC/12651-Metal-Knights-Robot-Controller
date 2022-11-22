@@ -40,18 +40,36 @@ public class ProjectAluminumKnight extends LinearOpMode {
     public static float regularSpeed = .6f;
     public static int tpr = 8192;//found on REV encoder specs chart
     public static double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
-
+    float l;
     public static float rampDown = 4.5f;
 
     public  static float coordinateX;
     public  static float coordinateZ;
 
+    Servo pivot;
+    Servo alignment;
+
+    int level;
+    int[] liftHeights = new int[8];
+
     @Override
     public void runOpMode(){
+        liftHeights[7] = 4150;
+        liftHeights[6] = 2906;
+        liftHeights[5] = 1776;
+        liftHeights[4] = 660;
+        liftHeights[3] = 532;
+        liftHeights[2] = 331;
+        liftHeights[1] = 206;
+        liftHeights[0] = 0;
+
         Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
         Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
         imu = new IMUController(hardwareMap);
 
+        alignment = hardwareMap.get(Servo.class,"alignment");
+        pivot = hardwareMap.get(Servo.class,"pivot");
+        pivot.setDirection(Servo.Direction.REVERSE);
         lift = hardwareMap.get(DcMotor.class,"lifter");
         grabber = hardwareMap.get(Servo.class,"grabber");
         right = hardwareMap.get(DcMotorEx.class, "right");
@@ -75,45 +93,56 @@ public class ProjectAluminumKnight extends LinearOpMode {
 
         waitForStart();
         while (opModeIsActive()){
-
-            if(gamepad1.right_bumper){
+            pivot.setPosition(.27);
+            //pivot.setPosition(.75);
+            alignment.setPosition(0);
+            if(gamepad1.right_bumper)
+            {
                 currentSpeed = slowSpeed;
-            }else{
+            }else
+            {
                 currentSpeed = regularSpeed;
             }
-
-            if(gamepad1.dpad_right){
-                LockToHeading(45);
-            }else if(gamepad1.dpad_left) {
-                LockToHeading(-45);
-            }
-            else {
                 if(driveTrainCode.RSX >= 0.001 || driveTrainCode.RSX <= -0.001 || !(driveTrainCode.LSX > 0.02f || driveTrainCode.LSX < -0.02f))
                 {
                     imu.ResetAngle();
                 }
                 driveTrainCode.UpdateDriveTrain(currentSpeed, StrafeCorrection());
-            }
 
             //region lifter buttons
             //538
-            if(gamepad1.a){
-                targetRotations = (1776);
+
+            if(gamepad1.dpad_right){
+                level = 4;
+                targetRotations = liftHeights[level];
             }
-            if(gamepad1.x){
-                targetRotations = (2906);
-            }
-            if(gamepad1.y){
-                targetRotations = 4150;
-            }
-            if(gamepad1.b){
-                targetRotations = 0;
+            if(gamepad1.dpad_left) {
+                level = 2;
+                targetRotations = liftHeights[level];
             }
             if(gamepad1.dpad_up){
-                targetRotations += (int)((538) * 1.5);
+                level = 3;
+                targetRotations = liftHeights[level];
             }
             if(gamepad1.dpad_down){
-                targetRotations -= (int)((538) * 1.5);
+                level = 1;
+                targetRotations = liftHeights[level];
+            }
+            if(gamepad1.a){
+                level = 5;
+                targetRotations = liftHeights[level];
+            }
+            if(gamepad1.x){
+                level = 6;
+                targetRotations = liftHeights[level];
+            }
+            if(gamepad1.y){
+                level = 7;
+                targetRotations = liftHeights[level];
+            }
+            if(gamepad1.b){
+                level = 0;
+                targetRotations = liftHeights[level];
             }
             //endregion
 
@@ -125,6 +154,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
             if(targetRotations > 4200){
                 targetRotations = 4200;
             }
+
             lift.setTargetPosition(targetRotations);
             lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             lift.setPower(1);

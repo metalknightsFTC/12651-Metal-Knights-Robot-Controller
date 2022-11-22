@@ -39,6 +39,8 @@ public class AutoFunctions extends LinearOpMode {
     private Servo grabber;
     private DriveTrainCode driveTrainCode;
     private PathMaster pathMaster;
+    Servo pivot;
+    Servo alignment;
 
     private static WebcamName camera;
     private int routine = 0;
@@ -50,15 +52,13 @@ public class AutoFunctions extends LinearOpMode {
     private TFObjectDetector tfod;
     public static int tpr = 8192;//found on REV encoder specs chart
     public static double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
-
-    public static float rampDown = 4.5f;
-
+    public static float rampDown = 3f;
 
     @SuppressLint("SdCardPath")
-    private static final String TFOD_MODEL_ASSET =  /*"PowerPlay.tflite";*/
+    private static String TFOD_MODEL_ASSET =  /*"PowerPlay.tflite";*/
             "/sdcard/FIRST/tflitemodels/model.tflite";
 
-    private static final String[] LABELS = {
+    private static String[] LABELS = {
             "helmet",
             "shield",
             "sword"
@@ -81,6 +81,7 @@ public class AutoFunctions extends LinearOpMode {
         Initialize();
         pathMaster = new PathMaster();
         waitForStart();
+        SetCameraAngle(0, .27);
         SetLiftTarget(-1);
         CloseClaw();
         imu.ResetAngle();
@@ -117,7 +118,7 @@ public class AutoFunctions extends LinearOpMode {
                 RedLeftSideDropPreload();
                 //move to parking
                 sleep(100);
-                Move(0,26f,.6f);
+                Move(49,26f,.6f);
                 //endregion
                 break;
 
@@ -125,7 +126,7 @@ public class AutoFunctions extends LinearOpMode {
                 //region Red Left Case 1 helmet code
                 RedLeftSideDropPreload();
                 sleep(100);
-                Move(0,1f,.6f);
+                Move(49,2.7f,.6f);
                 //endregion
                 break;
             case 2:
@@ -144,21 +145,23 @@ public class AutoFunctions extends LinearOpMode {
                 //region Red Right 2 Helmet code
                 RedRightSideDropPreload();
                 sleep(100);
-                Move(0,1.5f,.4f);
+                Move(49,3.5f,.4f);
                 //endregion
                 break;
             case 5:
                 //region Red Right 2 Shield code
                 RedRightSideDropPreload();
                 sleep(500);
-                Move(0,-17,.4f);
+                Move(49,-17,.4f);
                 //endregion
                 break;
             case 6:
                 BlueLeftSideDropPreload();
+                Move(49,26.3f,.6f);
                 break;
             case 7:
                 BlueLeftSideDropPreload();
+                Move(49,3f,.6f);
                 break;
             case 8:
                 BlueLeftSideDropPreload();
@@ -169,12 +172,12 @@ public class AutoFunctions extends LinearOpMode {
             case 10:
                 BlueRightSideDropPreload();
                 sleep(100);
-                Move(0,2,.4f);
+                Move(49,2,.4f);
                 break;
             case 11:
                 BlueRightSideDropPreload();
                 sleep(100);
-                Move(0,-17f,.4f);
+                Move(49,-18f,.4f);
                 break;
             default:
                 break;
@@ -280,16 +283,14 @@ public class AutoFunctions extends LinearOpMode {
     }
 //endregion
 
-    double coordinateZ = 0;
-    double coordinateX = 0;
-
     //Drive x inches in selected direction at selected speed using odometry to record distance and the internal measuring unit(IMU) to correct for drift
     //slows down after a threshold is reached
     //region Movement code
+    //the total amount the robot has moved
     double totalMovementX = 0;
     double totalMovementZ = 0;
-
-    public void DiagonalMove(float X, float Z, float speed)
+    double errorMargin = .08f;
+    public void Move(float X, float Z, float speed)
     {
         //how far the robot has left to move
         double xDist = X;
@@ -313,7 +314,7 @@ public class AutoFunctions extends LinearOpMode {
             rampDown = 20;
         }
         //region checks
-        while (xDist < -.08f || xDist > .08f || zDist < -.08f || zDist > .08f && opModeIsActive()) {
+        while (xDist < -errorMargin || xDist > errorMargin || zDist < -errorMargin || zDist > errorMargin && opModeIsActive()) {
                 //region Odometry Math
                 leftEncoderRotation = currentLeftEncoderRotation;
                 rightEncoderRotation = currentRightEncoderRotation;
@@ -334,8 +335,8 @@ public class AutoFunctions extends LinearOpMode {
                 xDist = X - totalMovementX;
                 zDist = Z - totalMovementZ;
                 float deltaX = (float) (X - totalMovementX) / rampDown;
-                deltaX = Range(deltaX, -1, 1);
                 float deltaZ = (float) (Z - totalMovementZ) / rampDown;
+                deltaX = Range(deltaX, -1, 1);
                 deltaZ = Range(deltaZ, -1, 1);
 
                 float turnMod = (float) imu.AngleDeviation(0) / 20;
@@ -348,107 +349,6 @@ public class AutoFunctions extends LinearOpMode {
                 driveTrainCode.UpdateDriveTrain(new Vector3(speed * deltaX, -turnMod * speed, speed * deltaZ));
         }
         //endregion
-        totalMovementX = 0;
-        totalMovementZ = 0;
-        driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
-    }
-
-    public void Move(float X, float Z, float speed){
-        //how far the robot has left to move
-        double xDist = X;
-        double zDist = Z;
-        //how far the robot has moved so far
-        //previously measured encoder positions
-        double rearEncoderRotation;
-        double rightEncoderRotation;
-        double leftEncoderRotation;
-        //currently measured encoder rotation
-        double currentLeftEncoderRotation = 0;
-        double currentRightEncoderRotation = 0;
-        double currentRearEncoderRotation = 0;
-        //the distance between the current encoder positions and the previous encoder positions
-        double deltaLeft;
-        double deltaRight;
-        double deltaBack;
-        //ticks per revolution
-        if(speed > .6f)
-        {
-            rampDown = 20;
-        }
-        if(xDist != 0 && zDist == 0)
-        {
-            //region X checks
-            while (xDist < -.035f || xDist > .035f && opModeIsActive()) {
-                //region Odometry Math
-                leftEncoderRotation = currentLeftEncoderRotation;
-                rightEncoderRotation = currentRightEncoderRotation;
-                rearEncoderRotation = currentRearEncoderRotation;
-
-                currentRightEncoderRotation = right.getCurrentPosition();
-                currentRearEncoderRotation = rear.getCurrentPosition();
-                currentLeftEncoderRotation = left.getCurrentPosition();
-
-                deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / tpr) * c;
-                deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / tpr) * c;
-                deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
-                //endregion
-
-                totalMovementZ += (deltaLeft + deltaRight) / 2;
-                totalMovementX += deltaBack;
-
-                xDist = X - totalMovementX;
-                zDist = Z - totalMovementZ;
-                float delta = (float) (X - totalMovementX) / rampDown;
-                delta = Range(delta, -1, 1);
-
-                float turnMod = (float) imu.AngleDeviation(0) / 20;
-
-                telemetry.addData("Global Heading: ", imu.heading);
-                telemetry.addData("Z: ", zDist);
-                telemetry.addData("X ", xDist);
-                telemetry.update();
-
-                driveTrainCode.UpdateDriveTrain(new Vector3(speed * delta, -turnMod * speed, 0));
-            }
-            //endregion
-        }else if(zDist != 0 && xDist == 0)
-        {
-            //region Z checks
-            while (zDist < -.035f || zDist > .035f && opModeIsActive()) {
-
-                //region Odometry math
-                leftEncoderRotation = currentLeftEncoderRotation;
-                rightEncoderRotation = currentRightEncoderRotation;
-                rearEncoderRotation = currentRearEncoderRotation;
-
-                currentRightEncoderRotation = right.getCurrentPosition();
-                currentRearEncoderRotation = rear.getCurrentPosition();
-                currentLeftEncoderRotation = left.getCurrentPosition();
-
-                deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / tpr) * c;
-                deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / tpr) * c;
-                deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
-                //endregion
-
-                totalMovementZ += (deltaLeft + deltaRight) / 2;
-                totalMovementX += deltaBack;
-
-                zDist = Z - totalMovementZ;
-                xDist = X - totalMovementX;
-                float delta = (float) (Z - totalMovementZ) / rampDown;
-                delta = Range(delta, -1, 1);
-
-                float turnMod = (float) imu.AngleDeviation(0) / 20;
-
-                telemetry.addData("Global Heading: ", imu.heading);
-                telemetry.addData("Z: ", zDist);
-                telemetry.addData("X ", xDist);
-                telemetry.update();
-
-                driveTrainCode.UpdateDriveTrain(new Vector3(0, -turnMod * speed, speed * delta));
-            }
-            //endregion
-        }
         totalMovementX = 0;
         totalMovementZ = 0;
         driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
@@ -501,7 +401,7 @@ public class AutoFunctions extends LinearOpMode {
 
     private void SnapToHeading(float target, float speed){
         float deltaNC = (float) (target - imu.GetAngle());
-        while (deltaNC > .04f || deltaNC < -.04f)
+        while (deltaNC > errorMargin || deltaNC < -errorMargin)
         {
             deltaNC = (float) (target - imu.GetAngle());
             float delta = (float) (target - imu.GetAngle()) / 3;
@@ -570,8 +470,13 @@ public class AutoFunctions extends LinearOpMode {
         }
     }
 
+    private void SetCameraAngle(double x, double z){
+        pivot.setPosition(z);
+        alignment.setPosition(x);
+    }
+
     private void OpenClaw(){
-        grabber.setPosition(.15f);
+        grabber.setPosition(.13f);
     }
 
     private void CloseClaw(){
@@ -607,8 +512,53 @@ public class AutoFunctions extends LinearOpMode {
         telemetry.addData("CV Status: ","GREEN");
     }
 
+    @SuppressLint("SdCardPath")
+    private void ScanForStack(){
+        SetCameraAngle(0,.75);
+        LABELS = new String[] {"Red Stack","Blue Stack"};
+        TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/stack.tflite";
+        OperateStackScan();
+    }
+
+    boolean OperateStackScan()
+    {
+        if (tfod != null) {
+            tfod.activate();
+            tfod.setZoom(1, 16.0/9.0);
+
+            // getUpdatedRecognitions() will return null if no new information is available since
+            // the last time that call was made.
+            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+
+            if (updatedRecognitions != null) {
+                telemetry.addData("# Object Detected", updatedRecognitions.size());
+                // step through the list of recognitions and display boundary info.
+                for (Recognition recognition : updatedRecognitions) {
+                    telemetry.addData("Label: ", recognition.getLabel());
+                    getDistance(recognition);
+                    return true;
+                }
+            }else
+            {
+                return false;
+            }
+        }else
+        {
+            return false;
+        }
+        return  false;
+    }
+
+    private Vector2 getDistance(Recognition recognition)
+    {
+        return new Vector2(0,0);
+    }
+
     private void Initialize()
     {
+
+        alignment = hardwareMap.get(Servo.class,"alignment");
+        pivot = hardwareMap.get(Servo.class,"pivot");
         lift = hardwareMap.get(DcMotor.class,"lifter");
         grabber = hardwareMap.get(Servo.class,"grabber");
 
@@ -684,19 +634,19 @@ public class AutoFunctions extends LinearOpMode {
         Move(3.5f,0f,.4f);
         //go to junction and lift
         sleep(100);
-        Move(0,-14.4f,.4f);
+        Move(3.5f,-14.4f,.4f);
         sleep(100);
         SetLiftTarget(0);
         sleep(100);
-        DiagonalMove(17f,-14.4f,.4f);
+        Move(17f,-14.4f,.4f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(0,-16f,.5f);
+        Move(17f,-16f,.5f);
         sleep(100);
         SetLiftTarget(-1);
         sleep(100);
-        DiagonalMove(49f,-16f, .55f);
+        Move(49f,-16f, .55f);
     }
 
     private void RedRightSideDropPreload()
@@ -705,53 +655,67 @@ public class AutoFunctions extends LinearOpMode {
         Move(3.5f,0,.4f);
         sleep(100);
         //drive to the entrypoint
-        Move(0,28f,.5f);
+        Move(3.5f,28f,.5f);
 
         sleep(100);
         SetLiftTarget(2);
         sleep(100);
 
-        DiagonalMove(40.7f,28,.5f);
+        Move(40f,28,.4f);
         sleep(100);
-        Move(0,31.7f,.4f);
+        Move(40f,31.5f,.4f);
         //sleep(100);
         OpenClaw();
         sleep(100);
-        Move(0,28f,.4f);
-        sleep(100);
+        //Move(40.1f,28f,.4f);
+        //sleep(100);
+        sleep(10);
+        Move(49f,28,.4f);
+        sleep(50);
         SetLiftTarget(-1);
-        sleep(100);
-        DiagonalMove(49f,27,.4f);
-        sleep(100);
     }
 
     private void BlueLeftSideDropPreload()
     {
-        Move(3.5f,0,.4f);
-        sleep(500);
-
+        //pushback from wall
+        Move(3.5f,0f,.4f);
+        //go to junction and lift
+        sleep(100);
+        Move(3.5f,-14.3f,.4f);
+        sleep(100);
+        SetLiftTarget(0);
+        sleep(100);
+        Move(16.7f,-14.3f,.4f);
+        sleep(100);
+        OpenClaw();
+        sleep(100);
+        Move(16.7f,-16f,.5f);
+        sleep(100);
+        SetLiftTarget(-1);
+        sleep(100);
+        Move(47.8f,-16f, .55f);
     }
 
     private void BlueRightSideDropPreload()
     {
         Move(3.5f,0f,.4f);
         sleep(100);
-        Move(0f,7.1f,.5f);
+        Move(3.5f,7.2f,.5f);
         sleep(100);
         SetLiftTarget(0);
         sleep(100);
-        DiagonalMove(18.35f,7.1f,.5f);
+        Move(17.6f,7.2f,.5f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(0,5.5f,.4f);
+        Move(17.6f,5.5f,.4f);
         sleep(100);
-        DiagonalMove(3.5f,5.5f,.5f);
+        Move(3.5f,5.5f,.5f);
         sleep(100);
         SetLiftTarget(-1);
         sleep(100);
-        Move(0,26.5f,.4f);
+        Move(3.5f,26.5f,.4f);
         sleep(100);
-        DiagonalMove(49,26.5f,.5f);
+        Move(49,26.5f,.5f);
     }
 }
