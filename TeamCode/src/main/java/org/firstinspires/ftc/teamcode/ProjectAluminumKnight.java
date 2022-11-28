@@ -25,12 +25,12 @@ public class ProjectAluminumKnight extends LinearOpMode {
 
     Blinker Expansion_Hub_1;
     Blinker Expansion_Hub_2;
-    DcMotor lift;
     Servo grabber;
     private IMUController imu;
     DriveTrainCode driveTrainCode;
 
-    private int targetRotations = 0;
+    LiftManager lift;
+
     public static float currentSpeed = .6f;
     public static float slowSpeed = .3f;
     public static float regularSpeed = .6f;
@@ -39,9 +39,6 @@ public class ProjectAluminumKnight extends LinearOpMode {
 
     Servo verticalR;
     Servo horizontalR;
-
-    int level;
-    int[] liftHeights = new int[8];
 
     @Override
     public void runOpMode()
@@ -72,8 +69,6 @@ public class ProjectAluminumKnight extends LinearOpMode {
 
             imu.GetAngle();
             telemetry.addData("Angle : ", imu.heading);
-            telemetry.addData("Lift Target: ", ((double)targetRotations));
-            telemetry.addData("Current Lift Position: ", lift.getCurrentPosition());
             telemetry.update();
             //endregion
         }
@@ -103,51 +98,34 @@ public class ProjectAluminumKnight extends LinearOpMode {
         //538
 
         if(gamepad1.dpad_right){
-            level = 4;
-            targetRotations = liftHeights[level];
+            lift.Lift(4);
         }
         if(gamepad1.dpad_left) {
-            level = 2;
-            targetRotations = liftHeights[level];
+            lift.Lift(2);
         }
         if(gamepad1.dpad_up){
-            level = 3;
-            targetRotations = liftHeights[level];
+            lift.Lift(2);
         }
         if(gamepad1.dpad_down){
-            level = 1;
-            targetRotations = liftHeights[level];
+            lift.Lift(1);
         }
         if(gamepad1.a){
-            level = 5;
-            targetRotations = liftHeights[level];
+            lift.Lift(5);
         }
         if(gamepad1.x){
-            level = 6;
-            targetRotations = liftHeights[level];
+            lift.Lift(6);
         }
         if(gamepad1.y){
-            level = 7;
-            targetRotations = liftHeights[level];
+            lift.Lift(7);
         }
         if(gamepad1.b){
-            level = 0;
-            targetRotations = liftHeights[level];
+            lift.Lift(0);
         }
         //endregion
 
         //region lifter code
-        targetRotations += (gamepad1.right_trigger - gamepad1.left_trigger) * 20;
-        if(targetRotations < 0){
-            targetRotations = 0;
-        }
-        if(targetRotations > 4200){
-            targetRotations = 4200;
-        }
+        lift.Lift((gamepad1.right_trigger - gamepad1.left_trigger)* 20f);
 
-        lift.setTargetPosition(targetRotations);
-        lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        lift.setPower(1);
     }
 
     public void Contact()
@@ -160,34 +138,18 @@ public class ProjectAluminumKnight extends LinearOpMode {
     }
 
     public void Initialize(){
-        liftHeights[7] = 4150;
-        liftHeights[6] = 2906;
-        liftHeights[5] = 1776;
-        liftHeights[4] = 660;
-        liftHeights[3] = 532;
-        liftHeights[2] = 331;
-        liftHeights[1] = 206;
-        liftHeights[0] = 0;
-
         Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
         Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
         imu = new IMUController(hardwareMap);
 
         horizontalR = hardwareMap.get(Servo.class,"alignment");
         verticalR = hardwareMap.get(Servo.class,"pivot");
-        lift = hardwareMap.get(DcMotor.class,"lifter");
         grabber = hardwareMap.get(Servo.class,"grabber");
         //poleContact = hardwareMap.get(TouchSensor.class, "poleContact");
         driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
 
         driveTrainCode.InvertMotorDirection(Motor.backLeft);
         driveTrainCode.InvertMotorDirection(Motor.frontLeft);
-
-        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lift.setDirection(DcMotorSimple.Direction.REVERSE);
-
         imu.ResetAngle();
 
         telemetry.addData("Status", "Initialized");

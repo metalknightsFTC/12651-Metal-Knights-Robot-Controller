@@ -32,12 +32,11 @@ public class AutoFunctions extends LinearOpMode {
     private DcMotorEx rear;
     private EndPoint endPoint = EndPoint.unset;
     private StartPoint startPoint = StartPoint.UnSet;
-    private DcMotor lift;
     private Servo grabber;
     private DriveTrainCode driveTrainCode;
     Servo verticalR;
     Servo horizontalR;
-
+    private LiftManager liftManager;
     private static WebcamName webcam1;
     private static  WebcamName webcam2;
     private static SwitchableCamera switchableCamera;
@@ -50,6 +49,8 @@ public class AutoFunctions extends LinearOpMode {
     public static int tpr = 8192;//found on REV encoder specs chart
     public static double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
     public static float rampDown = 3f;
+
+    Vector2 stackLocation;
 
     @SuppressLint("SdCardPath")
     private static String TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/Stack.tflite";
@@ -66,6 +67,7 @@ public class AutoFunctions extends LinearOpMode {
     @Override
     public void runOpMode()
     {
+        liftManager = new LiftManager(hardwareMap);
         imu = new IMUController(hardwareMap);
         while(!imu.IMU_Calibrated()){
             telemetry.addData("IMU STATUS: ","Calibrating");
@@ -76,7 +78,7 @@ public class AutoFunctions extends LinearOpMode {
         Initialize();
         waitForStart();
         SetCameraAngle(0, .655);
-        SetLiftTarget(-1);
+        liftManager.Lift(0);
         CloseClaw();
         imu.ResetAngle();
         targetHeading = imu.GetAngle();
@@ -238,30 +240,6 @@ public class AutoFunctions extends LinearOpMode {
     }
     //endregion
 
-    //region Lifter code
-    void  SetLiftTarget(int level){
-        int targetRotations = 0;
-
-        switch (level) {
-            case 0:
-                targetRotations = 1776;
-                break;
-            case 1:
-                targetRotations = 2906;
-                break;
-            case 2:
-                targetRotations = 4150;
-                break;
-            default:
-                break;
-        }
-
-        lift.setTargetPosition(targetRotations);
-        lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        lift.setPower(1);
-    }
-//endregion
-
     //Drive x inches in selected direction at selected speed using odometry to record distance and the internal measuring unit(IMU) to correct for drift
     //slows down after a threshold is reached
     //region Movement code
@@ -328,6 +306,9 @@ public class AutoFunctions extends LinearOpMode {
                 driveTrainCode.UpdateDriveTrain(new Vector3(speed * deltaX, -turnMod * speed, speed * deltaZ));
         }
         //endregion
+        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         totalMovementX = 0;
         totalMovementZ = 0;
         driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
@@ -535,6 +516,7 @@ public class AutoFunctions extends LinearOpMode {
                     telemetry.addData("Right Bound: ",recognition.getRight());
                     telemetry.addData("Top Bound: ",recognition.getTop());
                     telemetry.addData("Bottom Bound: ",recognition.getBottom());
+                    stackLocation = getDistance(recognition);
                     telemetry.addData("Distance: ", getDistance(recognition).toString());
                     telemetry.update();
                     return true;
@@ -552,7 +534,7 @@ public class AutoFunctions extends LinearOpMode {
 
     private Vector2 getDistance(Recognition recognition)
     {
-        float x = recognition.getRight() - recognition.getLeft();
+        float x = 0;//recognition.getRight() - recognition.getLeft();
         float z = (-.45f * (recognition.getRight()- recognition.getLeft())) + 78.20f;
         return new Vector2(x,z);
     }
@@ -562,7 +544,6 @@ public class AutoFunctions extends LinearOpMode {
 
         horizontalR = hardwareMap.get(Servo.class,"alignment");
         verticalR = hardwareMap.get(Servo.class,"pivot");
-        lift = hardwareMap.get(DcMotor.class,"lifter");
         grabber = hardwareMap.get(Servo.class,"grabber");
 
         right = hardwareMap.get(DcMotorEx.class, "right");
@@ -573,12 +554,6 @@ public class AutoFunctions extends LinearOpMode {
 
         driveTrainCode.InvertMotorDirection(Motor.backRight);
         driveTrainCode.InvertMotorDirection(Motor.frontRight);
-
-        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lift.setDirection(DcMotorSimple.Direction.REVERSE);
-
 
         right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -637,19 +612,19 @@ public class AutoFunctions extends LinearOpMode {
         Move(3.5f,0f,.4f);
         //go to junction and lift
         sleep(100);
-        Move(3.5f,-14.4f,.4f);
+        Move(0f,-14.4f,.4f);
         sleep(100);
-        SetLiftTarget(0);
+        liftManager.Lift(5);
         sleep(100);
-        Move(17f,-14.4f,.4f);
+        Move(17f,0f,.4f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(17f,-16f,.5f);
+        Move(0f,-2f,.5f);
         sleep(100);
-        SetLiftTarget(-1);
+        liftManager.Lift(0);
         sleep(100);
-        Move(49f,-16f, .55f);
+        Move(32f,0f, .55f);
     }
 
     private void RedRightSide()
@@ -658,24 +633,24 @@ public class AutoFunctions extends LinearOpMode {
         Move(3.5f,0,.4f);
         sleep(100);
         //drive to the entrypoint
-        Move(3.5f,28f,.5f);
+        Move(0f,28f,.5f);
 
         sleep(100);
-        SetLiftTarget(2);
+        liftManager.Lift(7);
         sleep(100);
 
-        Move(40f,28,.4f);
+        Move(40f,0,.4f);
         sleep(100);
-        Move(40f,31.5f,.4f);
+        Move(0f,3.5f,.4f);
         //sleep(100);
         OpenClaw();
         sleep(100);
         //Move(40.1f,28f,.4f);
         //sleep(100);
         sleep(10);
-        Move(49f,28,.4f);
+        Move(9f,-3.5f,.4f);
         sleep(50);
-        SetLiftTarget(-1);
+        liftManager.Lift(0);
     }
 
     private void BlueLeftSide()
@@ -684,41 +659,54 @@ public class AutoFunctions extends LinearOpMode {
         Move(3.5f,0f,.4f);
         //go to junction and lift
         sleep(100);
-        Move(3.5f,-14.3f,.4f);
+        Move(0f,-14.3f,.4f);
         sleep(100);
-        SetLiftTarget(0);
+        liftManager.Lift(5);
         sleep(100);
-        Move(16.7f,-14.3f,.4f);
+        Move(16.7f,0f,.4f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(16.7f,-16f,.5f);
+        Move(0,-2.7f,.5f);
         sleep(100);
-        SetLiftTarget(-1);
+        liftManager.Lift(0);
         sleep(100);
-        Move(47.8f,-16f, .55f);
+        Move(47.8f,2.7f, .55f);
     }
 
     private void BlueRightSide()
     {
         Move(3.5f,0f,.4f);
         sleep(100);
-        Move(3.5f,7.2f,.5f);
+        Move(0f,7.2f,.5f);
         sleep(100);
-        SetLiftTarget(0);
+        liftManager.Lift(5);
         sleep(100);
-        Move(17.6f,7.2f,.5f);
+        Move(14.6f,0f,.5f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(17.6f,5.5f,.4f);
+        Move(0f,2.3f,.4f);
         sleep(100);
-        Move(3.5f,5.5f,.5f);
+        Move(-14.6f,0f,.5f);
         sleep(100);
-        SetLiftTarget(-1);
+        liftManager.Lift(0);
         sleep(100);
-        Move(3.5f,26.5f,.4f);
+        Move(0f,19.5f,.4f);
         sleep(100);
-        Move(49,26.5f,.5f);
+        Move(49,0f,.5f);
     }
+
+    private void GrabCone()
+    {
+        if(OperateStackScan())
+        {
+            liftManager.Lift(4);
+            Move(stackLocation.x,stackLocation.z,.4f);
+            CloseClaw();
+            liftManager.Lift(5);
+            sleep(1000);
+        }
+    }
+
 }
