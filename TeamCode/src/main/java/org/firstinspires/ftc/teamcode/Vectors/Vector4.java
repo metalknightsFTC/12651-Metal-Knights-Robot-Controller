@@ -41,4 +41,6 @@ public class Vector4 {
         return this;
     }
 
+    public static Vector4 zero(){return new Vector4(0,0,0,0);}
+
 }

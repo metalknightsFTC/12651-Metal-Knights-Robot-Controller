@@ -35,8 +35,13 @@ public class Vector2 {
         return this;
     }
 
-    public Vector2 zero(){
+    public static Vector2 zero(){
         return new Vector2(0,0);
+    }
+
+    public String toString()
+    {
+        return "X: " + x + ", Z: " + z;
     }
 
 }

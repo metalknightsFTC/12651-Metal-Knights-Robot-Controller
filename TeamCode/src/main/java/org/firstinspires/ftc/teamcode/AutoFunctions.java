@@ -1,12 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.function.Consumer;
-import org.firstinspires.ftc.robotcore.external.function.Continuation;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.SwitchableCamera;
-import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -48,8 +44,6 @@ public class AutoFunctions extends LinearOpMode {
     private int routine = 0;
     public static double targetHeading = 0;
 
-    public FtcDashboard dashboard;
-
     private IMUController imu;
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
@@ -58,13 +52,13 @@ public class AutoFunctions extends LinearOpMode {
     public static float rampDown = 3f;
 
     @SuppressLint("SdCardPath")
-    private static String TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/model.tflite";
+    private static String TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/Stack.tflite";
 
-    private static String[] LABELS = {
+    private static String[] LABELS = {"Blue Stack","Red Stack"};/*{
             "helmet",
             "shield",
             "sword"
-    };
+    };*/
 
     private static final String VUFORIA_KEY =
             "AWdhXNj/////AAABmRSQQCEQY0Z+t33w9GIgzFpsCMHl909n/+kfa54XDdq6fPjSi/8sBVItFQ/J/d5SoF48FrZl4Nz1zeCrwudfhFr4bfWTfh5oiLwKepThOhOYHf8V/GemTPe0+igXEu4VhznKcr3Bm5DiLe2b6zBVzvWFDWEHI/mkhLxRkU+llmwvitwodynP2arFgZ43thde9GJPCBFne/q6tPXeeN8/PoTUOtycTrnTkL6fBuHelMMnvN2RjqnMJ9SBUcaVX8DsWukq1fDr29O8bguAJU5JKxt9E3+XXiexpE/EJ9jxJc7YoMtpxfMro/e0sm9gRNckw4uPtZHnaoDjFhaK9t2D7kQQc3rwgK1OEZlY7FGQyy8g";
@@ -72,7 +66,6 @@ public class AutoFunctions extends LinearOpMode {
     @Override
     public void runOpMode()
     {
-        dashboard = FtcDashboard.getInstance();
         imu = new IMUController(hardwareMap);
         while(!imu.IMU_Calibrated()){
             telemetry.addData("IMU STATUS: ","Calibrating");
@@ -82,34 +75,16 @@ public class AutoFunctions extends LinearOpMode {
         Expansion_Hub_2 = imu.Expansion_Hub_2;
         Initialize();
         waitForStart();
-        SetCameraAngle(0, .27);
-        //SetLiftTarget(-1);
+        SetCameraAngle(0, .655);
+        SetLiftTarget(-1);
         CloseClaw();
         imu.ResetAngle();
+        targetHeading = imu.GetAngle();
+        while(opModeIsActive())
+        {
+            ScanForStack();
+        }
         //CheckForModel();
-        Move(0,20,.4f);
-        SnapToHeading(90,.4f);
-        Move(0,20,.4f);
-        //region end state as an integer value
-        /*
-        case 0 = red left 1
-        case 1 = red left 2
-        case 2 = red left 3
-
-        case 3 = red right 1
-        case 4 = red right 2
-        case 5 = red right 3
-
-        case 6 = blue left 1
-        case 7 = blue left 2
-        case 8 = blue left 3
-
-        case 9 = blue right 1
-        case 10 = blue right 2
-        case 11 = blue right 3
-         */
-        //endregion
-        imu.ResetAngle();
         //SetRoutine();
         //RunRoutine();
     }
@@ -333,8 +308,8 @@ public class AutoFunctions extends LinearOpMode {
                 deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
                 //endregion
 
-                totalMovementZ += (Math.cos(targetHeading) * ((deltaLeft + deltaRight) / 2)) + (Math.sin(targetHeading) * (deltaBack));
-                totalMovementX += (Math.sin(targetHeading) * ((deltaLeft + deltaRight) / 2)) + (Math.cos(targetHeading) * (deltaBack));
+                totalMovementZ += ((deltaLeft + deltaRight) / 2);
+                totalMovementX += deltaBack;
 
                 xDist = X - totalMovementX;
                 zDist = Z - totalMovementZ;
@@ -404,11 +379,11 @@ public class AutoFunctions extends LinearOpMode {
     //endregion
 
     private void SnapToHeading(float target, float speed){
-        float deltaNC = (float) (target - imu.GetAngle());
+        float deltaNC = (float) (imu.GetAngle() - target);
         while (deltaNC > errorMargin || deltaNC < -errorMargin)
         {
-            deltaNC = (float) (target - imu.GetAngle());
-            float delta = (float) (target - imu.GetAngle()) / 3;
+            deltaNC = (float) (imu.GetAngle()-target);
+            float delta = (float) deltaNC / 20;
 
             driveTrainCode.UpdateDriveTrain(new Vector3(0, speed * delta, 0));
             telemetry.addData("CurrentHeading: ", imu.GetAngle());
@@ -416,6 +391,10 @@ public class AutoFunctions extends LinearOpMode {
         }
         driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
         targetHeading = imu.GetAngle();
+        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
     }
 
     void CheckEndPoint(String label)
@@ -525,10 +504,16 @@ public class AutoFunctions extends LinearOpMode {
 
     @SuppressLint("SdCardPath")
     private void ScanForStack(){
-        SetCameraAngle(0,.75);
-        LABELS = new String[] {"Red Stack","Blue Stack"};
-        TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/stack.tflite";
-        OperateStackScan();
+        SetCameraAngle(.04,.27);
+        LABELS = new String[] {"Blue Stack","Red Stack"};
+        TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/Stack.tflite";
+        //tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
+        //tfod = null;
+        //InitTfod();
+        if(tfod!=null)
+        {
+            OperateStackScan();
+        }
     }
 
     boolean OperateStackScan()
@@ -550,8 +535,8 @@ public class AutoFunctions extends LinearOpMode {
                     telemetry.addData("Right Bound: ",recognition.getRight());
                     telemetry.addData("Top Bound: ",recognition.getTop());
                     telemetry.addData("Bottom Bound: ",recognition.getBottom());
+                    telemetry.addData("Distance: ", getDistance(recognition).toString());
                     telemetry.update();
-                    //getDistance(recognition);
                     return true;
                 }
             }else
@@ -567,8 +552,8 @@ public class AutoFunctions extends LinearOpMode {
 
     private Vector2 getDistance(Recognition recognition)
     {
-        float x = 1;
-        float z = 1;
+        float x = recognition.getRight() - recognition.getLeft();
+        float z = (-.45f * (recognition.getRight()- recognition.getLeft())) + 78.20f;
         return new Vector2(x,z);
     }
 

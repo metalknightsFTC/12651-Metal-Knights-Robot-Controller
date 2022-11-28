@@ -40,7 +40,7 @@ public class Vector3 {
         return this;
     }
 
-    public Vector3 zero(){
+    public static Vector3 zero(){
         return new Vector3(0,0,0);
     }
 

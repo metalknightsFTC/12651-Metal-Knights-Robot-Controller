@@ -56,8 +56,8 @@ public class ProjectAluminumKnight extends LinearOpMode {
         while (opModeIsActive())
         {
             verticalR.setPosition(.27);
-            //pivot.setPosition(.75);
-            horizontalR.setPosition(0);
+            //verticalR.setPosition(.655);
+            horizontalR.setPosition(.04);
 
             SpeedAndDrive();
             ManageLiftLevel();
