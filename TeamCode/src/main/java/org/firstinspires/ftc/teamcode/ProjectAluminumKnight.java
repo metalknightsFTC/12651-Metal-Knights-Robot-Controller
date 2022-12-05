@@ -141,7 +141,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
         Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
         Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
         imu = new IMUController(hardwareMap);
-
+        lift = new LiftManager(hardwareMap);
         horizontalR = hardwareMap.get(Servo.class,"alignment");
         verticalR = hardwareMap.get(Servo.class,"pivot");
         grabber = hardwareMap.get(Servo.class,"grabber");

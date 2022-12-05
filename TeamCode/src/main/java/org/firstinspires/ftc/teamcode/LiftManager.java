@@ -14,7 +14,7 @@ public class LiftManager {
         liftHeights[7] = 4150;
         liftHeights[6] = 2906;
         liftHeights[5] = 1776;
-        liftHeights[4] = 660;
+        liftHeights[4] = 640;
         liftHeights[3] = 532;
         liftHeights[2] = 331;
         liftHeights[1] = 206;
@@ -40,7 +40,7 @@ public class LiftManager {
 
     public void Lift(int targetPosition){
         targetRotations = liftHeights[targetPosition];
-        //LiftToTarget();
+        LiftToTarget();
     }
 
     private void LiftToTarget()

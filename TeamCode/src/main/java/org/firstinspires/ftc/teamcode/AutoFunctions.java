@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 import android.annotation.SuppressLint;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.SwitchableCamera;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
@@ -19,7 +20,11 @@ import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.sun.tools.javac.util.MandatoryWarningHandler;
+
 import org.firstinspires.ftc.teamcode.Vectors.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Autonomous
@@ -49,17 +54,17 @@ public class AutoFunctions extends LinearOpMode {
     public static int tpr = 8192;//found on REV encoder specs chart
     public static double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
     public static float rampDown = 3f;
-
+    public List<Float> averageBound;
     Vector2 stackLocation;
 
     @SuppressLint("SdCardPath")
-    private static String TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/Stack.tflite";
+    private static String TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/model.tflite";
 
-    private static String[] LABELS = {"Blue Stack","Red Stack"};/*{
+    private static String[] LABELS = {
             "helmet",
             "shield",
             "sword"
-    };*/
+    };
 
     private static final String VUFORIA_KEY =
             "AWdhXNj/////AAABmRSQQCEQY0Z+t33w9GIgzFpsCMHl909n/+kfa54XDdq6fPjSi/8sBVItFQ/J/d5SoF48FrZl4Nz1zeCrwudfhFr4bfWTfh5oiLwKepThOhOYHf8V/GemTPe0+igXEu4VhznKcr3Bm5DiLe2b6zBVzvWFDWEHI/mkhLxRkU+llmwvitwodynP2arFgZ43thde9GJPCBFne/q6tPXeeN8/PoTUOtycTrnTkL6fBuHelMMnvN2RjqnMJ9SBUcaVX8DsWukq1fDr29O8bguAJU5JKxt9E3+XXiexpE/EJ9jxJc7YoMtpxfMro/e0sm9gRNckw4uPtZHnaoDjFhaK9t2D7kQQc3rwgK1OEZlY7FGQyy8g";
@@ -82,10 +87,8 @@ public class AutoFunctions extends LinearOpMode {
         CloseClaw();
         imu.ResetAngle();
         targetHeading = imu.GetAngle();
-        while(opModeIsActive())
-        {
-            ScanForStack();
-        }
+        //ScanForStack();
+        GrabCone();
         //CheckForModel();
         //SetRoutine();
         //RunRoutine();
@@ -488,18 +491,25 @@ public class AutoFunctions extends LinearOpMode {
         SetCameraAngle(.04,.27);
         LABELS = new String[] {"Blue Stack","Red Stack"};
         TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/Stack.tflite";
-        //tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
-        //tfod = null;
-        //InitTfod();
+        tfod.shutdown();
+        tfod = null;
+        InitTfod();
         if(tfod!=null)
         {
-            OperateStackScan();
+            while (!OperateStackScan()&&opModeIsActive())
+            {
+                telemetry.addData("Scanning...","");
+            }
         }
     }
+    float avgBound;
 
+    int ii = 0;
     boolean OperateStackScan()
     {
-        if (tfod != null) {
+        SetCameraAngle(.04,.27);
+        if (tfod != null)
+        {
             tfod.activate();
             tfod.setZoom(1, 16.0/9.0);
 
@@ -507,18 +517,30 @@ public class AutoFunctions extends LinearOpMode {
             // the last time that call was made.
             List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
 
-            if (updatedRecognitions != null) {
+            if (updatedRecognitions != null)
+            {
                 telemetry.addData("# Object Detected", updatedRecognitions.size());
                 // step through the list of recognitions and display boundary info.
-                for (Recognition recognition : updatedRecognitions) {
+                for (Recognition recognition : updatedRecognitions)
+                {
                     telemetry.addData("Label: ", recognition.getLabel());
                     telemetry.addData("Left Bound: ",recognition.getLeft());
                     telemetry.addData("Right Bound: ",recognition.getRight());
                     telemetry.addData("Top Bound: ",recognition.getTop());
                     telemetry.addData("Bottom Bound: ",recognition.getBottom());
-                    stackLocation = getDistance(recognition);
-                    telemetry.addData("Distance: ", getDistance(recognition).toString());
                     telemetry.update();
+                    if(ii <= 30)
+                    {
+                        averageBound.add(recognition.getRight()-recognition.getLeft());
+                        ii++;
+                        return false;
+                    }
+                    for (int iii = 0; iii < ii; iii++){
+                        avgBound += averageBound.get(iii);
+                    }
+                    avgBound /= ii;
+                    stackLocation =
+                            getDistance(avgBound,recognition.getRight() + recognition.getLeft() / 2);
                     return true;
                 }
             }else
@@ -532,10 +554,16 @@ public class AutoFunctions extends LinearOpMode {
         return  false;
     }
 
-    private Vector2 getDistance(Recognition recognition)
+    private Vector2 getDistance(float deltaBound, float bound)
     {
-        float x = 0;//recognition.getRight() - recognition.getLeft();
-        float z = (-.45f * (recognition.getRight()- recognition.getLeft())) + 78.20f;
+        float x = (-0.0586f * ((bound) / 2)) + 21.834f;
+        // linear
+        // float z = (-0.35f * (recognition.getRight()- recognition.getLeft())) + 65.85f;
+        //exponential
+        //float z = (float) (94.3f * Math.exp(-0.0118f * deltaBound));
+        //polynomial
+        float z = (float)(108f + ((-1.28f * deltaBound) + (0.00462f * Math.pow(deltaBound,2))));
+
         return new Vector2(x,z);
     }
 
@@ -699,14 +727,21 @@ public class AutoFunctions extends LinearOpMode {
 
     private void GrabCone()
     {
-        if(OperateStackScan())
-        {
-            liftManager.Lift(4);
-            Move(stackLocation.x,stackLocation.z,.4f);
-            CloseClaw();
-            liftManager.Lift(5);
-            sleep(1000);
-        }
+        SetCameraAngle(.04,.27);
+        OpenClaw();
+        sleep(100);
+        ScanForStack();
+        liftManager.Lift(4);
+        telemetry.addData("Position: ", stackLocation.toString());
+        telemetry.update();
+        sleep(100);
+        Move(-stackLocation.x,stackLocation.z,.4f);
+        sleep(100);
+        CloseClaw();
+        sleep(750);
+        liftManager.Lift(5);
+        sleep(100);
+        Move(0,-24,.4f);
     }
 
 }
