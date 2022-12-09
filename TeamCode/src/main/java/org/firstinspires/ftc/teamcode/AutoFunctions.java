@@ -43,8 +43,6 @@ public class AutoFunctions extends LinearOpMode {
     Servo horizontalR;
     private LiftManager liftManager;
     private static WebcamName webcam1;
-    private static  WebcamName webcam2;
-    private static SwitchableCamera switchableCamera;
     private int routine = 0;
     public static double targetHeading = 0;
 
@@ -54,7 +52,7 @@ public class AutoFunctions extends LinearOpMode {
     public static int tpr = 8192;//found on REV encoder specs chart
     public static double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
     public static float rampDown = 3f;
-    public List<Float> averageBound;
+    public List<Float> averageBound = new ArrayList<>();
     Vector2 stackLocation;
 
     @SuppressLint("SdCardPath")
@@ -87,11 +85,10 @@ public class AutoFunctions extends LinearOpMode {
         CloseClaw();
         imu.ResetAngle();
         targetHeading = imu.GetAngle();
-        //ScanForStack();
-        GrabCone();
-        //CheckForModel();
-        //SetRoutine();
-        //RunRoutine();
+        CheckForModel();
+        SetRoutine();
+        RunRoutine();
+        //GrabCone();
     }
 
     //region Run the Autonomous
@@ -101,67 +98,57 @@ public class AutoFunctions extends LinearOpMode {
                 //region Red Left Case 0 Sword code
                 RedLeftSide();
                 //move to parking
-                sleep(100);
-                Move(49,26f,.6f);
+                Move(0,15f,.5f);
                 //endregion
                 break;
 
             case 1:
                 //region Red Left Case 1 helmet code
                 RedLeftSide();
+                Move(0,-2f,.5f);
                 sleep(100);
-                Move(49,2.7f,.6f);
                 //endregion
                 break;
             case 2:
                 //region Red Left Case 2 Shield code
                 RedLeftSide();
+                Move(0,-18f,.5f);
+                sleep(100);
                 //endregion
                 break;
             case 3:
                 //region Red Right 1 Sword code
                 RedRightSide();
-                sleep(5000);
                 //drive to position 1
                 //endregion
                 break;
             case 4:
                 //region Red Right 2 Helmet code
                 RedRightSide();
-                sleep(100);
-                Move(49,3.5f,.4f);
                 //endregion
                 break;
             case 5:
                 //region Red Right 2 Shield code
                 RedRightSide();
-                sleep(500);
-                Move(49,-17,.4f);
                 //endregion
                 break;
             case 6:
-                BlueLeftSide();
-                Move(49,26.3f,.6f);
+                RedLeftSide();
                 break;
             case 7:
-                BlueLeftSide();
-                Move(49,3f,.6f);
+                RedLeftSide();
                 break;
             case 8:
-                BlueLeftSide();
+                RedLeftSide();
                 break;
             case 9:
-                BlueRightSide();
+                RedRightSide();
                 break;
             case 10:
-                BlueRightSide();
-                sleep(100);
-                Move(49,2,.4f);
+                RedRightSide();
                 break;
             case 11:
-                BlueRightSide();
-                sleep(100);
-                Move(49,-18f,.4f);
+                RedRightSide();
                 break;
             default:
                 break;
@@ -249,7 +236,7 @@ public class AutoFunctions extends LinearOpMode {
     //the total amount the robot has moved
     double totalMovementX = 0;
     double totalMovementZ = 0;
-    double errorMargin = .08f;
+    double errorMargin = .12f;
     public void Move(float X, float Z, float speed)
     {
         //how far the robot has left to move
@@ -269,9 +256,15 @@ public class AutoFunctions extends LinearOpMode {
         double deltaRight;
         double deltaBack;
         //ticks per revolution
-        if(speed > .6f)
+        if(speed > .8f)
         {
-            rampDown = 20;
+            rampDown = 20f;
+        }else if(speed > .6f)
+        {
+            rampDown = 12.5f;
+        }else
+        {
+            rampDown = 2.75f;
         }
         //region checks
         while (xDist < -errorMargin || xDist > errorMargin || zDist < -errorMargin || zDist > errorMargin && opModeIsActive()) {
@@ -443,7 +436,7 @@ public class AutoFunctions extends LinearOpMode {
     }
 
     private void OpenClaw(){
-        grabber.setPosition(.13f);
+        grabber.setPosition(.145f);
     }
 
     private void CloseClaw(){
@@ -540,7 +533,7 @@ public class AutoFunctions extends LinearOpMode {
                     }
                     avgBound /= ii;
                     stackLocation =
-                            getDistance(avgBound,recognition.getRight() + recognition.getLeft() / 2);
+                            getDistance(avgBound,recognition.getRight() + recognition.getLeft());
                     return true;
                 }
             }else
@@ -554,17 +547,57 @@ public class AutoFunctions extends LinearOpMode {
         return  false;
     }
 
+    boolean xScan()
+    {
+        SetCameraAngle(.04,.27);
+        if (tfod != null)
+        {
+            tfod.activate();
+            tfod.setZoom(1, 16.0/9.0);
+
+            // getUpdatedRecognitions() will return null if no new information is available since
+            // the last time that call was made.
+            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+
+            if (updatedRecognitions != null)
+            {
+                telemetry.addData("# Object Detected", updatedRecognitions.size());
+                // step through the list of recognitions and display boundary info.
+                for (Recognition recognition : updatedRecognitions)
+                {
+                    telemetry.addData("Label: ", recognition.getLabel());
+                    telemetry.addData("Left Bound: ",recognition.getLeft());
+                    telemetry.addData("Right Bound: ",recognition.getRight());
+                    telemetry.addData("Top Bound: ",recognition.getTop());
+                    telemetry.addData("Bottom Bound: ",recognition.getBottom());
+                    telemetry.update();
+                    stackLocation =
+                            getDistance(avgBound,recognition.getRight() + recognition.getLeft());
+                    return true;
+                }
+            }else
+            {
+                return false;
+            }
+        }else
+        {
+            return false;
+        }
+        return  false;
+    }
+
+
     private Vector2 getDistance(float deltaBound, float bound)
     {
         float x = (-0.0586f * ((bound) / 2)) + 21.834f;
         // linear
-        // float z = (-0.35f * (recognition.getRight()- recognition.getLeft())) + 65.85f;
+        // float z = (-0.35f * (deltaBound)) + 65.85f;
         //exponential
         //float z = (float) (94.3f * Math.exp(-0.0118f * deltaBound));
         //polynomial
         float z = (float)(108f + ((-1.28f * deltaBound) + (0.00462f * Math.pow(deltaBound,2))));
 
-        return new Vector2(x,z);
+        return new Vector2(x,z + 3.55f);
     }
 
     private void Initialize()
@@ -636,49 +669,67 @@ public class AutoFunctions extends LinearOpMode {
 
     private void RedLeftSide()
     {
+        SetCameraAngle(.04,.27);
         //pushback from wall
-        Move(3.5f,0f,.4f);
+        Move(3.5f,0f,.45f);
         //go to junction and lift
         sleep(100);
-        Move(0f,-14.4f,.4f);
+        Move(0f,-14.4f,.45f);
         sleep(100);
         liftManager.Lift(5);
         sleep(100);
-        Move(17f,0f,.4f);
+        Move(14f,0f,.45f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(0f,-2f,.5f);
+        Move(0f,-2f,.45f);
         sleep(100);
         liftManager.Lift(0);
         sleep(100);
-        Move(32f,0f, .55f);
+        Move(32.5f,0f, .65f);
+        sleep(100);
+        Move(0,4f,.45f);
+        sleep(100);
+        GrabCone();
     }
 
     private void RedRightSide()
     {
-        //pull off of wall
-        Move(3.5f,0,.4f);
+        SetCameraAngle(.04,.27);
+        //pull off wall
+        Move(3.5f,0f,.4f);
         sleep(100);
-        //drive to the entrypoint
-        Move(0f,28f,.5f);
-
+        //move up to junction
+        Move(0f,7.2f,.5f);
         sleep(100);
-        liftManager.Lift(7);
+        //lift
+        liftManager.Lift(5);
         sleep(100);
-
-        Move(40f,0,.4f);
+        //move on top of junction
+        Move(14.6f,0f,.5f);
         sleep(100);
-        Move(0f,3.5f,.4f);
-        //sleep(100);
+        //drop cone
         OpenClaw();
         sleep(100);
-        //Move(40.1f,28f,.4f);
-        //sleep(100);
-        sleep(10);
-        Move(9f,-3.5f,.4f);
-        sleep(50);
+        // pull back from junction
+        Move(0f,-2.3f,.4f);
+        sleep(100);
+        //strafe back to center of the path
+        Move(-14.6f,0f,.5f);
+        sleep(100);
         liftManager.Lift(0);
+        sleep(100);
+        //drive up to prepare for strafe
+        Move(0f,19.5f,.4f);
+        sleep(100);
+        //strafe to line up on stack
+        Move(32.5f,0f,.65f);
+        sleep(100);
+        //turn to stack
+        SnapToHeading(180,.4f);
+        Move(0,4f,.4f);
+        //grab and drop
+        GrabCone();
     }
 
     private void BlueLeftSide()
@@ -727,7 +778,6 @@ public class AutoFunctions extends LinearOpMode {
 
     private void GrabCone()
     {
-        SetCameraAngle(.04,.27);
         OpenClaw();
         sleep(100);
         ScanForStack();
@@ -735,13 +785,32 @@ public class AutoFunctions extends LinearOpMode {
         telemetry.addData("Position: ", stackLocation.toString());
         telemetry.update();
         sleep(100);
-        Move(-stackLocation.x,stackLocation.z,.4f);
+        Move(0,stackLocation.z,.4f);
+        sleep(100);
+        Move(-stackLocation.x,0,.4f);
         sleep(100);
         CloseClaw();
         sleep(750);
         liftManager.Lift(5);
         sleep(100);
-        Move(0,-24,.4f);
+        Move(0,-(stackLocation.z - 22.5f),.45f);
+        sleep(100);
+        liftManager.Lift(0);
+        //DropConeLeft();
+    }
+
+    private void DropConeLeft()
+    {
+        Move(-11.75f,0,.45f);
+        sleep(100);
+        OpenClaw();
+        sleep(100);
+        Move(11f,0,.45f);
+        sleep(100)
+        liftManager.Lift(0);
+        sleep(100);
+        //xScan();
+        //Move(-stackLocation.x,0,.55f);
     }
 
 }

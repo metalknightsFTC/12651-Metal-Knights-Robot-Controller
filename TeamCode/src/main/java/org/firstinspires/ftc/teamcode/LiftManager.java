@@ -26,13 +26,13 @@ public class LiftManager {
         lift.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
-    public void Lift(float delta)
+    public void Lift(float delta, boolean liftLimit)
     {
         targetRotations += (int)delta;
-        if(targetRotations < 0){
+        if(targetRotations < 0 && liftLimit){
             targetRotations = 0;
         }
-        if(targetRotations > 4200){
+        if(targetRotations > 4200 && liftLimit){
             targetRotations = 4200;
         }
         LiftToTarget();
@@ -48,6 +48,10 @@ public class LiftManager {
         lift.setTargetPosition(targetRotations);
         lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         lift.setPower(1);
+    }
+
+    public  void  Reset(){
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
 }

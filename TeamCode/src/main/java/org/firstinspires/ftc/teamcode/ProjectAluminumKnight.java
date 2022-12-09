@@ -40,6 +40,8 @@ public class ProjectAluminumKnight extends LinearOpMode {
     Servo verticalR;
     Servo horizontalR;
 
+    boolean liftLimits = true;
+
     @Override
     public void runOpMode()
     {
@@ -52,9 +54,10 @@ public class ProjectAluminumKnight extends LinearOpMode {
     {
         while (opModeIsActive())
         {
-            verticalR.setPosition(.27);
+            //verticalR.setPosition(.27);
             //verticalR.setPosition(.655);
-            horizontalR.setPosition(.04);
+            //horizontalR.setPosition(.04);
+            LiftRecovery();
 
             SpeedAndDrive();
             ManageLiftLevel();
@@ -124,7 +127,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
         //endregion
 
         //region lifter code
-        lift.Lift((gamepad1.right_trigger - gamepad1.left_trigger)* 20f);
+        lift.Lift((gamepad1.right_trigger - gamepad1.left_trigger)* 20f, liftLimits);
 
     }
 
@@ -175,4 +178,14 @@ public class ProjectAluminumKnight extends LinearOpMode {
         return out;
     }
     //endregion
+
+    public void LiftRecovery()
+    {
+        telemetry.addData("Recover Lift: ","Hold A to unlock");
+        liftLimits = !gamepad2.a;
+        if(gamepad2.b && gamepad2.a){
+            lift.Reset();
+        }
+    }
+
 }
