@@ -806,7 +806,7 @@ public class AutoFunctions extends LinearOpMode {
         OpenClaw();
         sleep(100);
         Move(11f,0,.45f);
-        sleep(100)
+        sleep(100);
         liftManager.Lift(0);
         sleep(100);
         //xScan();
