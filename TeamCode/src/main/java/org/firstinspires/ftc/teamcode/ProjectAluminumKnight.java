@@ -125,10 +125,9 @@ public class ProjectAluminumKnight extends LinearOpMode {
             lift.Lift(0);
         }
         //endregion
-
         //region lifter code
         lift.Lift((gamepad1.right_trigger - gamepad1.left_trigger)* 20f, liftLimits);
-
+        //endregion
     }
 
     public void Contact()
@@ -179,13 +178,21 @@ public class ProjectAluminumKnight extends LinearOpMode {
     }
     //endregion
 
+    public void SoulsLikeTargetLock()
+    {
+
+    }
+
     public void LiftRecovery()
     {
         telemetry.addData("Recover Lift: ","Hold A to unlock");
-        liftLimits = !gamepad2.a;
-        if(gamepad2.b && gamepad2.a){
+        liftLimits = !gamepad1.back;
+        if(gamepad1.back && gamepad1.b){
             lift.Reset();
         }
     }
+
+
+
 
 }
