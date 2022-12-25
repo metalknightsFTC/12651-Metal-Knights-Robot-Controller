@@ -1,46 +1,29 @@
 package org.firstinspires.ftc.teamcode;
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Blinker;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.TouchSensor;
-
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.teamcode.Enums.Motor;
-import org.firstinspires.ftc.teamcode.Vectors.*;
 
 @TeleOp
 public class ProjectAluminumKnight extends LinearOpMode {
 
-    Blinker Expansion_Hub_1;
-    Blinker Expansion_Hub_2;
-    Servo grabber;
+    private Servo grabber;
     private IMUController imu;
-    DriveTrainCode driveTrainCode;
-
-    LiftManager lift;
-
+    private DriveTrainCode driveTrainCode;
+    private Servo verticalR;
+    private Servo horizontalR;
+    private LiftManager lift;
+    private NavigationManager navSystem;
+    private static final float slowSpeed = .3f;
+    private static final float regularSpeed = .7f;
+    private static final float fastSpeed = 1f;
     public static float currentSpeed = .6f;
-    public static float slowSpeed = .3f;
-    public static float regularSpeed = .6f;
-    public static float fastSpeed = .8f;
-    public static TouchSensor poleContact;
-
-    Servo verticalR;
-    Servo horizontalR;
-
-    boolean liftLimits = true;
+    private float targetLockHeading;
+    private boolean liftLimits = true;
+    private boolean hasLocked = false;
+    private float lastX = 0;
+    private float currentX = 0;
 
     @Override
     public void runOpMode()
@@ -54,9 +37,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
     {
         while (opModeIsActive())
         {
-            //verticalR.setPosition(.27);
-            //verticalR.setPosition(.655);
-            //horizontalR.setPosition(.04);
+            SetCameraAngle(0,.15);
             LiftRecovery();
 
             SpeedAndDrive();
@@ -64,7 +45,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
             //Contact();
             //region Grabber Code
             if(gamepad1.left_bumper){
-                grabber.setPosition(0.13f);
+                grabber.setPosition(0.16f);
             }else{
                 grabber.setPosition(.33f);
             }
@@ -88,7 +69,8 @@ public class ProjectAluminumKnight extends LinearOpMode {
         {
             currentSpeed = regularSpeed;
         }
-        if(driveTrainCode.RSX >= 0.001 || driveTrainCode.RSX <= -0.001 || !(driveTrainCode.LSX > 0.02f || driveTrainCode.LSX < -0.02f))
+        if(driveTrainCode.RSX >= 0.001 || driveTrainCode.RSX <= -0.001 ||
+                !(driveTrainCode.LSX > 0.02f || driveTrainCode.LSX < -0.02f) && !gamepad1.right_stick_button)
         {
             imu.ResetAngle();
         }
@@ -99,30 +81,32 @@ public class ProjectAluminumKnight extends LinearOpMode {
     {
         //region lifter buttons
         //538
-
-        if(gamepad1.dpad_right){
-            lift.Lift(4);
-        }
-        if(gamepad1.dpad_left) {
-            lift.Lift(2);
-        }
-        if(gamepad1.dpad_up){
-            lift.Lift(2);
-        }
-        if(gamepad1.dpad_down){
-            lift.Lift(1);
-        }
-        if(gamepad1.a){
-            lift.Lift(5);
-        }
-        if(gamepad1.x){
-            lift.Lift(6);
-        }
-        if(gamepad1.y){
-            lift.Lift(7);
-        }
-        if(gamepad1.b){
-            lift.Lift(0);
+        if(liftLimits)
+        {
+            if (gamepad1.dpad_right) {
+                lift.Lift(4);
+            }
+            if (gamepad1.dpad_left) {
+                lift.Lift(2);
+            }
+            if (gamepad1.dpad_up) {
+                lift.Lift(3);
+            }
+            if (gamepad1.dpad_down) {
+                lift.Lift(1);
+            }
+            if (gamepad1.a) {
+                lift.Lift(5);
+            }
+            if (gamepad1.x) {
+                lift.Lift(6);
+            }
+            if (gamepad1.y) {
+                lift.Lift(7);
+            }
+            if (gamepad1.b) {
+                lift.Lift(0);
+            }
         }
         //endregion
         //region lifter code
@@ -130,22 +114,14 @@ public class ProjectAluminumKnight extends LinearOpMode {
         //endregion
     }
 
-    public void Contact()
-    {
-        if(poleContact.isPressed()){
-            gamepad1.rumble(.5,.5,100);
-        }else{
-            gamepad1.stopRumble();
-        }
-    }
-
+    //region Initialization Code
     public void Initialize(){
-        Expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
-        Expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
+        Blinker expansion_Hub_1 = hardwareMap.get(Blinker.class, "Control Hub");
+        Blinker expansion_Hub_2 = hardwareMap.get(Blinker.class, "Expansion Hub 1");
         imu = new IMUController(hardwareMap);
         lift = new LiftManager(hardwareMap);
-        horizontalR = hardwareMap.get(Servo.class,"alignment");
-        verticalR = hardwareMap.get(Servo.class,"pivot");
+        horizontalR = hardwareMap.get(Servo.class, "alignment");
+        verticalR = hardwareMap.get(Servo.class, "pivot");
         grabber = hardwareMap.get(Servo.class,"grabber");
         //poleContact = hardwareMap.get(TouchSensor.class, "poleContact");
         driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
@@ -153,18 +129,20 @@ public class ProjectAluminumKnight extends LinearOpMode {
         driveTrainCode.InvertMotorDirection(Motor.backLeft);
         driveTrainCode.InvertMotorDirection(Motor.frontLeft);
         imu.ResetAngle();
-
+        navSystem = new NavigationManager(hardwareMap, imu, driveTrainCode);
         telemetry.addData("Status", "Initialized");
         telemetry.update();
     }
-
+    //endregion
+    //region Drift Correction
     public float StrafeCorrection()
     {
-        float turnMod = (float) imu.AngleDeviation(0) / 20;
+        SoulsLikeTargetLock();
+        float turnMod = (float) imu.AngleDeviation(targetLockHeading) / 20;
         turnMod = Range(turnMod,-1,1);
         return -turnMod;
     }
-
+    //endregion
     //region lock input between 2 numbers
     private float Range(float in,float lower, float upper){
         float out = in;
@@ -178,21 +156,45 @@ public class ProjectAluminumKnight extends LinearOpMode {
     }
     //endregion
 
+    //region Target Lock
     public void SoulsLikeTargetLock()
     {
-
+        lastX = currentX;
+        currentX = (navSystem.DeltaMovement().x);
+        if(!gamepad1.right_stick_button)
+        {
+            hasLocked = false;
+        }
+        if(!hasLocked && gamepad1.right_stick_button) {
+            targetLockHeading = imu.GetAngle();
+            hasLocked = true;
+        }
+        if(hasLocked)
+        {
+            targetLockHeading = 0;
+        }else
+        {
+            targetLockHeading = 0;
+        }
     }
-
+    //endregion
+    //region Lift Recovery
     public void LiftRecovery()
     {
-        telemetry.addData("Recover Lift: ","Hold A to unlock");
+        telemetry.addData("Recover Lift: ","Hold back to unlock while holding back" +
+                " press b to re-lock");
         liftLimits = !gamepad1.back;
-        if(gamepad1.back && gamepad1.b){
+        if(gamepad1.back && gamepad1.b)
+        {
+            telemetry.addData("Lift Recovery: ", "Re-locked");
             lift.Reset();
         }
     }
+    //endregion
 
-
-
+    private void SetCameraAngle(double x, double z){
+        verticalR.setPosition(z);
+        horizontalR.setPosition(x);
+    }
 
 }

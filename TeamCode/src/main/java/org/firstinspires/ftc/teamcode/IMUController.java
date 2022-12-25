@@ -16,10 +16,10 @@ public class IMUController {
     private BNO055IMU imu1;
     public Blinker Expansion_Hub_1;
     public Blinker Expansion_Hub_2;
-    double lastAngles;
-    double globalAngle;
+    float lastAngles;
+    float globalAngle;
     HardwareMap hardwareMap;
-    public double heading;
+    public float heading;
 
     public IMUController(HardwareMap gHardwareMap){
         hardwareMap = gHardwareMap;
@@ -74,7 +74,7 @@ public class IMUController {
      * Get current cumulative angle rotation from last reset.
      * @return Angle in degrees. - = left, + = right.
      */
-    public double GetAngle()
+    public float GetAngle()
     {
         /* We  determined the Y axis is the axis we want to use for heading angle.
          * We have to process the angle because the imu works in euler angles so the Y axis is
@@ -82,9 +82,9 @@ public class IMUController {
          * 180 degrees. We detect this transition and track the total cumulative angle of rotation.
          */
 
-        double angles = imu1.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+        float angles = imu1.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
 
-        double deltaAngle = angles - lastAngles;
+        float deltaAngle = angles - lastAngles;
 
         //angles += 180;
         if (deltaAngle < -180)

@@ -15,7 +15,7 @@ public class LiftManager {
         liftHeights[6] = 2906;
         liftHeights[5] = 1776;
         liftHeights[4] = 640;
-        liftHeights[3] = 532;
+        liftHeights[3] = 512;
         liftHeights[2] = 331;
         liftHeights[1] = 206;
         liftHeights[0] = 0;
@@ -50,8 +50,9 @@ public class LiftManager {
         lift.setPower(1);
     }
 
-    public  void  Reset(){
+    public  void  Reset()
+    {
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        Lift(0);
     }
-
 }
