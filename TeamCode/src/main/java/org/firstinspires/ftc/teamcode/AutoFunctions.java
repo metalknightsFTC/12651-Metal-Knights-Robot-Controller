@@ -380,7 +380,7 @@ public class AutoFunctions extends LinearOpMode {
         return out;
     }
     //endregion
-
+    //region Use Tensorflow
     void CheckEndPoint(String label)
     {
         switch (label) {
@@ -436,7 +436,8 @@ public class AutoFunctions extends LinearOpMode {
             }*/
         }
     }
-
+//endregion
+    //region Servo Controls
     private void SetCameraAngle(double x, double z){
         verticalR.setPosition(z);
         horizontalR.setPosition(x);
@@ -449,7 +450,8 @@ public class AutoFunctions extends LinearOpMode {
     private void CloseClaw(){
         grabber.setPosition(.33f);
     }
-
+    //endregion
+    //region Initialize Tensorflow
     private void InitVuforia()
     {
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
@@ -476,6 +478,7 @@ public class AutoFunctions extends LinearOpMode {
         }
         telemetry.addData("CV Status: ","GREEN");
     }
+    //endregion
 
     @SuppressLint("SdCardPath")
     private void ScanForStack()
@@ -589,13 +592,14 @@ public class AutoFunctions extends LinearOpMode {
                 // step through the list of recognitions and display boundary info.
                 for (Recognition recognition : updatedRecognitions)
                 {
+                    float x = (recognition.getLeft()+recognition.getRight()) / 2f;
                     telemetry.addData("Label: ", recognition.getLabel());
                     telemetry.addData("Left Bound: ",recognition.getLeft());
                     telemetry.addData("Right Bound: ",recognition.getRight());
                     telemetry.addData("Top Bound: ",recognition.getTop());
                     telemetry.addData("Bottom Bound: ",recognition.getBottom());
                     telemetry.update();
-                    junctionAlignment = (-.0587f * ((recognition.getLeft()+recognition.getRight()) / 2)) + 21.492f;
+                    junctionAlignment = 7.07f + (-.0324f*((x))) + (0.0000269f * (float)Math.pow(((x)),2));
                     return true;
                 }
             }else
@@ -624,20 +628,32 @@ public class AutoFunctions extends LinearOpMode {
     }
 
     @SuppressLint("SdCardPath")
-    private void JunctionAlignment()
+    private void initJunctionAlignment()
     {
         LABELS = new String[] {"Junction"};
         TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/Junctions.tflite";
         tfod.shutdown();
         tfod = null;
         InitTfod();
+    }
+
+
+    int breakFromScan;
+    private void JunctionAlignment()
+    {
         if(tfod != null)
         {
             while (!xScan())
             {
                 telemetry.addData("Scanning", "...");
+                if(breakFromScan >= 100000)
+                {
+                    junctionAlignment = 0;
+                    return;
+                }
+                breakFromScan++;
             }
-            Move(junctionAlignment, 0, .4f);
+            Move(-junctionAlignment, 0, .4f);
         }
     }
 
@@ -731,7 +747,24 @@ public class AutoFunctions extends LinearOpMode {
         sleep(100);
         Move(0,4f,.45f);
         sleep(100);
+        SnapToHeading(0,.35f);
         GrabCone();
+    }
+
+    public void SnapToHeading(float target, float speed){
+        float deltaNC = (float) (imu.GetAngle() - target);
+        while (deltaNC > .12f || deltaNC < -.12f)
+        {
+            deltaNC = (float) (imu.GetAngle()-target);
+            float delta = (float) deltaNC / 20;
+
+            driveTrainCode.UpdateDriveTrain(new Vector3(0, speed * delta, 0));
+        }
+        driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
+        targetHeading = imu.GetAngle();
+        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     private void RedRightSide()
@@ -812,49 +845,46 @@ public class AutoFunctions extends LinearOpMode {
             liftManager.Lift(4);
             telemetry.addData("Position: ", stackLocation.toString());
             telemetry.update();
+            initJunctionAlignment();
             sleep(100);
-            Move(-stackLocation.x, 0, .4f);
+            Move(-stackLocation.x, 0, .45f);
             sleep(100);
-            Move(0, stackLocation.z, .4f);
+            Move(0, stackLocation.z, .48f);
             sleep(100);
             CloseClaw();
             sleep(750);
             liftManager.Lift(5);
             sleep(100);
-            MoveCone();
+            Move(0, -21.2f, .45f);
+            sleep(100);
+            DropConeLeft();
             sleep(100);
             liftManager.Lift(3);
             sleep(250);
-            Move(0, (stackLocation.z - 22.3f), .45f);
+            Move(0, 20, .45f);
             sleep(100);
             CloseClaw();
             sleep(750);
             liftManager.Lift(5);
             sleep(100);
-            MoveCone();
+            Move(0, -19.5f, .45f);
+            sleep(100);
+            DropConeLeft();
             sleep(100);
             liftManager.Lift(0);
             sleep(1000);
         }
     }
 
-    private void MoveCone()
-    {
-        Move(0, -(stackLocation.z - 22.3f), .45f);
-        sleep(100);
-        //liftManager.Lift(0);
-        DropConeLeft();
-    }
-
     private void DropConeLeft()
     {
-        Move(-10.4f,0,.4f);
+        Move(-10f,0,.4f);
         sleep(100);
-        //JunctionAlignment();
+        JunctionAlignment();
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(10.4f - junctionAlignment,0,.4f);
+        Move(10.4f,0,.4f);
         sleep(100);
     }
 

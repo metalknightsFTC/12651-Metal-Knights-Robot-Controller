@@ -92,7 +92,7 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode
                         for (Recognition recognition : updatedRecognitions)
                         {
                             double x = (recognition.getRight() + recognition.getLeft()) / 2;
-                            double xOffset = (-0.0544f * ((x) / 2)) + 19.614f;
+                            double xOffset = 7.07+ (-.0324*((x))) + (0.0000269 * Math.pow(((x)),2));//(-.0155f * ((x) / 2)) + 4.63f;
                             telemetry.addData("Label", recognition.getLabel());
                             telemetry.addData("X dist: ", xOffset);
                             telemetry.addData("X: ",x);

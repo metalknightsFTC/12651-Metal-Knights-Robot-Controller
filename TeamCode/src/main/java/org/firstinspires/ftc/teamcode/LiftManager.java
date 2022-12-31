@@ -4,13 +4,15 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-public class LiftManager {
+public class LiftManager
+{
     private DcMotor lift;
     private int level;
     private int[] liftHeights = new int[8];
     private int targetRotations = 0;
 
-    public LiftManager (HardwareMap hardwareMapG){
+    public LiftManager (HardwareMap hardwareMapG)
+    {
         liftHeights[7] = 4150;
         liftHeights[6] = 2906;
         liftHeights[5] = 1776;
@@ -38,7 +40,8 @@ public class LiftManager {
         LiftToTarget();
     }
 
-    public void Lift(int targetPosition){
+    public void Lift(int targetPosition)
+    {
         targetRotations = liftHeights[targetPosition];
         LiftToTarget();
     }
@@ -50,7 +53,7 @@ public class LiftManager {
         lift.setPower(1);
     }
 
-    public  void  Reset()
+    public void Reset()
     {
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Lift(0);

@@ -57,6 +57,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
             //endregion
         }
     }
+
     public void SpeedAndDrive()
     {
         if(gamepad1.right_bumper)
@@ -73,8 +74,13 @@ public class ProjectAluminumKnight extends LinearOpMode {
                 !(driveTrainCode.LSX > 0.02f || driveTrainCode.LSX < -0.02f) && !gamepad1.right_stick_button)
         {
             imu.ResetAngle();
+            driveTrainCode.UpdateDriveTrain(currentSpeed, StrafeCorrection());
         }
-        driveTrainCode.UpdateDriveTrain(currentSpeed, StrafeCorrection());
+        else
+        {
+            SoulsLikeTargetLock();
+            driveTrainCode.UpdateDriveTrain(currentSpeed,0);
+        }
     }
 
     public void ManageLiftLevel()
@@ -110,7 +116,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
         }
         //endregion
         //region lifter code
-        lift.Lift((gamepad1.right_trigger - gamepad1.left_trigger)* 20f, liftLimits);
+        lift.Lift((gamepad1.right_trigger - gamepad1.left_trigger) * 20f, liftLimits);
         //endregion
     }
 
@@ -137,8 +143,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
     //region Drift Correction
     public float StrafeCorrection()
     {
-        SoulsLikeTargetLock();
-        float turnMod = (float) imu.AngleDeviation(targetLockHeading) / 20;
+        float turnMod = (float) imu.AngleDeviation(0) / 20;
         turnMod = Range(turnMod,-1,1);
         return -turnMod;
     }
@@ -171,7 +176,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
         }
         if(hasLocked)
         {
-            targetLockHeading = 0;
+            navSystem.SnapToHeading(targetLockHeading,.4f);
         }else
         {
             targetLockHeading = 0;
@@ -192,7 +197,8 @@ public class ProjectAluminumKnight extends LinearOpMode {
     }
     //endregion
 
-    private void SetCameraAngle(double x, double z){
+    private void SetCameraAngle(double x, double z)
+    {
         verticalR.setPosition(z);
         horizontalR.setPosition(x);
     }
