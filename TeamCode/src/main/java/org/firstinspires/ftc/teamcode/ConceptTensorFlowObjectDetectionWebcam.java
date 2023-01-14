@@ -47,9 +47,9 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode
 {
 
     @SuppressLint("SdCardPath")
-    private static final String TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/Junctions.tflite";
+    private static final String TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/Stack.tflite";
 
-    private static final String[] LABELS = {"Junction"};
+    private static final String[] LABELS = {"Blue Stack","Red Stack"};
 
     private static final String VUFORIA_KEY =
             "AWdhXNj/////AAABmRSQQCEQY0Z+t33w9GIgzFpsCMHl909n/+kfa54XDdq6fPjSi/8sBVItFQ/J/d5SoF48FrZl4Nz1zeCrwudfhFr4bfWTfh5oiLwKepThOhOYHf8V/GemTPe0+igXEu4VhznKcr3Bm5DiLe2b6zBVzvWFDWEHI/mkhLxRkU+llmwvitwodynP2arFgZ43thde9GJPCBFne/q6tPXeeN8/PoTUOtycTrnTkL6fBuHelMMnvN2RjqnMJ9SBUcaVX8DsWukq1fDr29O8bguAJU5JKxt9E3+XXiexpE/EJ9jxJc7YoMtpxfMro/e0sm9gRNckw4uPtZHnaoDjFhaK9t2D7kQQc3rwgK1OEZlY7FGQyy8g";
@@ -91,11 +91,14 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode
 
                         for (Recognition recognition : updatedRecognitions)
                         {
-                            double x = (recognition.getRight() + recognition.getLeft()) / 2;
-                            double xOffset = 7.07+ (-.0324*((x))) + (0.0000269 * Math.pow(((x)),2));//(-.0155f * ((x) / 2)) + 4.63f;
+                            float bound = recognition.getRight() + recognition.getLeft();
+                            float deltaBound = (recognition.getRight()-recognition.getLeft()) / 2;
+                            float x = (-.0587f * ((bound) / 2)) + 21.492f;//(-.043f * ((bound) / 2)) + 14.7f;
+                            float z =  (float)(108f + ((-1.28f * deltaBound) + (0.00462f * Math.pow(deltaBound,2))));
+
                             telemetry.addData("Label", recognition.getLabel());
-                            telemetry.addData("X dist: ", xOffset);
-                            telemetry.addData("X: ",x);
+                            telemetry.addData("X: ", (x));
+                            telemetry.addData("Z: ",(z - 31.7f));
                             telemetry.addData("","\n");
                         }
                         telemetry.update();

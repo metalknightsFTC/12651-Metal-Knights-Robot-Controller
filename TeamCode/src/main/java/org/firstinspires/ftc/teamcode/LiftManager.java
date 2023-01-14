@@ -10,6 +10,7 @@ public class LiftManager
     private int level;
     private int[] liftHeights = new int[8];
     private int targetRotations = 0;
+    public int currentHeight;
 
     public LiftManager (HardwareMap hardwareMapG)
     {

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Blinker;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.Enums.Motor;
 
@@ -9,21 +10,22 @@ import org.firstinspires.ftc.teamcode.Enums.Motor;
 public class ProjectAluminumKnight extends LinearOpMode {
 
     private Servo grabber;
-    private IMUController imu;
-    private DriveTrainCode driveTrainCode;
+    private Servo flipOut;
     private Servo verticalR;
     private Servo horizontalR;
+    private ColorSensor poleContact;
+    private IMUController imu;
+    private DriveTrainCode driveTrainCode;
     private LiftManager lift;
     private NavigationManager navSystem;
     private static final float slowSpeed = .3f;
     private static final float regularSpeed = .7f;
     private static final float fastSpeed = 1f;
     public static float currentSpeed = .6f;
+    private float targetFlipOut = 0;
     private float targetLockHeading;
     private boolean liftLimits = true;
     private boolean hasLocked = false;
-    private float lastX = 0;
-    private float currentX = 0;
 
     @Override
     public void runOpMode()
@@ -54,7 +56,6 @@ public class ProjectAluminumKnight extends LinearOpMode {
             imu.GetAngle();
             telemetry.addData("Angle : ", imu.heading);
             telemetry.update();
-            //endregion
         }
     }
 
@@ -119,6 +120,11 @@ public class ProjectAluminumKnight extends LinearOpMode {
         lift.Lift((gamepad1.right_trigger - gamepad1.left_trigger) * 20f, liftLimits);
         //endregion
     }
+    public void PutAwayFlipOut()
+    {
+
+        //flipOut.setPosition(targetFlipOut);
+    }
 
     //region Initialization Code
     public void Initialize(){
@@ -129,7 +135,8 @@ public class ProjectAluminumKnight extends LinearOpMode {
         horizontalR = hardwareMap.get(Servo.class, "alignment");
         verticalR = hardwareMap.get(Servo.class, "pivot");
         grabber = hardwareMap.get(Servo.class,"grabber");
-        //poleContact = hardwareMap.get(TouchSensor.class, "poleContact");
+        //flipOut = hardwareMap.get(Servo.class,"flipOut");
+        //poleContact = hardwareMap.get(ColorSensor.class, "poleContact");
         driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
 
         driveTrainCode.InvertMotorDirection(Motor.backLeft);
@@ -164,8 +171,6 @@ public class ProjectAluminumKnight extends LinearOpMode {
     //region Target Lock
     public void SoulsLikeTargetLock()
     {
-        lastX = currentX;
-        currentX = (navSystem.DeltaMovement().x);
         if(!gamepad1.right_stick_button)
         {
             hasLocked = false;
