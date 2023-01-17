@@ -358,37 +358,32 @@ public class AutoFunctions extends LinearOpMode {
     //endregion
 
     //region TensorFlow code
-    boolean OperateTensorFlow()
-    {
+    boolean OperateTensorFlow() {
         if (tfod != null) {
             tfod.activate();
-            tfod.setZoom(1, 16.0/9.0);
+            tfod.setZoom(1, 16.0 / 9.0);
 
-                // getUpdatedRecognitions() will return null if no new information is available since
-                // the last time that call was made.
-                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+            // getUpdatedRecognitions() will return null if no new information is available since
+            // the last time that call was made.
+            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
 
-                if (updatedRecognitions != null) {
-                    telemetry.addData("# Object Detected", updatedRecognitions.size());
-                    // step through the list of recognitions and display boundary info.
-                    for (Recognition recognition : updatedRecognitions) {
-                        telemetry.addData("Label: ", recognition.getLabel());
-                        CheckEndPoint(recognition.getLabel());
-                        return true;
-                    }
-                }else
-                {
-                    return false;
+            if (updatedRecognitions != null) {
+                telemetry.addData("# Object Detected", updatedRecognitions.size());
+                // step through the list of recognitions and display boundary info.
+                for (Recognition recognition : updatedRecognitions) {
+                    telemetry.addData("Label: ", recognition.getLabel());
+                    CheckEndPoint(recognition.getLabel());
+                    return true;
                 }
-        }else
-        {
+            } else {
+                return false;
+            }
+        } else {
             return false;
         }
-        return  false;
+        return false;
     }
-    //endregion
 
-    //region lock input between 2 numbers
     private float Range(float in,float lower, float upper)
     {
         float out = in;

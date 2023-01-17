@@ -91,13 +91,16 @@ public class ProjectAluminumKnight extends LinearOpMode {
         //538
         if(liftLimits)
         {
-            if (gamepad1.dpad_right) {
+            if (gamepad1.dpad_right)
+            {
                 lift.Lift(4);
             }
-            if (gamepad1.dpad_left) {
+            if (gamepad1.dpad_left)
+            {
                 lift.Lift(2);
             }
-            if (gamepad1.dpad_up) {
+            if (gamepad1.dpad_up)
+            {
                 lift.Lift(3);
             }
             if (gamepad1.dpad_down) {
@@ -105,26 +108,23 @@ public class ProjectAluminumKnight extends LinearOpMode {
             }
             if (gamepad1.a)
             {
-                flipOut.setPosition(.8f);
-                flipped = true;
                 lift.Lift(5);
+                flipOut.setPosition(.8f);
             }
             if (gamepad1.x)
             {
-                flipOut.setPosition(.8f);
-                flipped = true;
                 lift.Lift(6);
+                flipOut.setPosition(.8f);
             }
             if (gamepad1.y)
             {
-                flipOut.setPosition(.8f);
-                flipped = true;
                 lift.Lift(7);
+                flipOut.setPosition(.8f);
             }
             if (gamepad1.b)
             {
+
                 flipOut.setPosition(0);
-                flipped = false;
                 lift.Lift(0);
             }
         }
