@@ -22,10 +22,11 @@ public class ProjectAluminumKnight extends LinearOpMode {
     private static final float regularSpeed = .7f;
     private static final float fastSpeed = 1f;
     public static float currentSpeed = .6f;
-    private float targetFlipOut = 0;
+    private float targetFlipOut = 1150;
     private float targetLockHeading;
     private boolean liftLimits = true;
     private boolean hasLocked = false;
+    private boolean flipped = false;
 
     @Override
     public void runOpMode()
@@ -102,28 +103,49 @@ public class ProjectAluminumKnight extends LinearOpMode {
             if (gamepad1.dpad_down) {
                 lift.Lift(1);
             }
-            if (gamepad1.a) {
+            if (gamepad1.a)
+            {
+                flipOut.setPosition(.8f);
+                flipped = true;
                 lift.Lift(5);
             }
-            if (gamepad1.x) {
+            if (gamepad1.x)
+            {
+                flipOut.setPosition(.8f);
+                flipped = true;
                 lift.Lift(6);
             }
-            if (gamepad1.y) {
+            if (gamepad1.y)
+            {
+                flipOut.setPosition(.8f);
+                flipped = true;
                 lift.Lift(7);
             }
-            if (gamepad1.b) {
+            if (gamepad1.b)
+            {
+                flipOut.setPosition(0);
+                flipped = false;
                 lift.Lift(0);
             }
         }
         //endregion
         //region lifter code
         lift.Lift((gamepad1.right_trigger - gamepad1.left_trigger) * 20f, liftLimits);
+        //FlipOut();
         //endregion
     }
-    public void PutAwayFlipOut()
+    public void FlipOut()
     {
-
-        //flipOut.setPosition(targetFlipOut);
+        if(lift.currentHeight < targetFlipOut && !flipped)
+        {
+            flipOut.setPosition(0);
+            flipped = false;
+        }
+        else if(lift.currentHeight > targetFlipOut && flipped)
+        {
+            flipOut.setPosition(.8f);
+            flipped = true;
+        }
     }
 
     //region Initialization Code
@@ -135,7 +157,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
         horizontalR = hardwareMap.get(Servo.class, "alignment");
         verticalR = hardwareMap.get(Servo.class, "pivot");
         grabber = hardwareMap.get(Servo.class,"grabber");
-        //flipOut = hardwareMap.get(Servo.class,"flipOut");
+        flipOut = hardwareMap.get(Servo.class,"flipOut");
         //poleContact = hardwareMap.get(ColorSensor.class, "poleContact");
         driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
 

@@ -52,6 +52,7 @@ public class LiftManager
         lift.setTargetPosition(targetRotations);
         lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         lift.setPower(1);
+        currentHeight = lift.getCurrentPosition();
     }
 
     public void Reset()
