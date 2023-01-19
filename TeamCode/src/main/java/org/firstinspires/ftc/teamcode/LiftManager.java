@@ -14,9 +14,9 @@ public class LiftManager
 
     public LiftManager (HardwareMap hardwareMapG)
     {
-        liftHeights[7] = 4150;
-        liftHeights[6] = 2906;
-        liftHeights[5] = 1776;
+        liftHeights[7] = 4000;
+        liftHeights[6] = 2900;
+        liftHeights[5] = 1700;
         liftHeights[4] = 640;
         liftHeights[3] = 512;
         liftHeights[2] = 331;

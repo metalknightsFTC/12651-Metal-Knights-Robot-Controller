@@ -32,6 +32,7 @@ public class AutoFunctions extends LinearOpMode {
     private EndPoint endPoint = EndPoint.unset;
     private StartPoint startPoint = StartPoint.UnSet;
     private Servo grabber;
+    private Servo flipOut;
     private DriveTrainCode driveTrainCode;
     Servo verticalR;
     Servo horizontalR;
@@ -78,6 +79,7 @@ public class AutoFunctions extends LinearOpMode {
         }
         Initialize();
         waitForStart();
+        flipOut.setPosition(0);
         SetCameraAngle(0, .655);
         liftManager.Lift(0);
         CloseClaw();
@@ -726,6 +728,7 @@ public class AutoFunctions extends LinearOpMode {
         horizontalR = hardwareMap.get(Servo.class,"alignment");
         verticalR = hardwareMap.get(Servo.class,"pivot");
         grabber = hardwareMap.get(Servo.class,"grabber");
+        flipOut = hardwareMap.get(Servo.class,"flipOut");
 
         right = hardwareMap.get(DcMotorEx.class, "right");
         left = hardwareMap.get(DcMotorEx.class, "left");

@@ -10,10 +10,8 @@ import org.firstinspires.ftc.teamcode.Enums.Motor;
 public class ProjectAluminumKnight extends LinearOpMode {
 
     private Servo grabber;
-    private Servo flipOut;
     private Servo verticalR;
     private Servo horizontalR;
-    private ColorSensor poleContact;
     private IMUController imu;
     private DriveTrainCode driveTrainCode;
     private LiftManager lift;
@@ -22,7 +20,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
     private static final float regularSpeed = .7f;
     private static final float fastSpeed = 1f;
     public static float currentSpeed = .6f;
-    private float targetFlipOut = 1150;
+    private float targetFlipOut = 1000;
     private float targetLockHeading;
     private boolean liftLimits = true;
     private boolean hasLocked = false;
@@ -103,49 +101,32 @@ public class ProjectAluminumKnight extends LinearOpMode {
             {
                 lift.Lift(3);
             }
-            if (gamepad1.dpad_down) {
+            if (gamepad1.dpad_down)
+            {
                 lift.Lift(1);
             }
             if (gamepad1.a)
             {
                 lift.Lift(5);
-                flipOut.setPosition(.8f);
             }
             if (gamepad1.x)
             {
                 lift.Lift(6);
-                flipOut.setPosition(.8f);
             }
             if (gamepad1.y)
             {
                 lift.Lift(7);
-                flipOut.setPosition(.8f);
             }
             if (gamepad1.b)
             {
-
-                flipOut.setPosition(0);
                 lift.Lift(0);
             }
         }
         //endregion
         //region lifter code
         lift.Lift((gamepad1.right_trigger - gamepad1.left_trigger) * 20f, liftLimits);
-        //FlipOut();
+        telemetry.addData("Ticks: ",lift.currentHeight);
         //endregion
-    }
-    public void FlipOut()
-    {
-        if(lift.currentHeight < targetFlipOut && !flipped)
-        {
-            flipOut.setPosition(0);
-            flipped = false;
-        }
-        else if(lift.currentHeight > targetFlipOut && flipped)
-        {
-            flipOut.setPosition(.8f);
-            flipped = true;
-        }
     }
 
     //region Initialization Code
@@ -157,10 +138,7 @@ public class ProjectAluminumKnight extends LinearOpMode {
         horizontalR = hardwareMap.get(Servo.class, "alignment");
         verticalR = hardwareMap.get(Servo.class, "pivot");
         grabber = hardwareMap.get(Servo.class,"grabber");
-        flipOut = hardwareMap.get(Servo.class,"flipOut");
-        //poleContact = hardwareMap.get(ColorSensor.class, "poleContact");
         driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
-
         driveTrainCode.InvertMotorDirection(Motor.backLeft);
         driveTrainCode.InvertMotorDirection(Motor.frontLeft);
         imu.ResetAngle();
