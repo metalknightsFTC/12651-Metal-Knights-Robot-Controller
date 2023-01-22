@@ -71,8 +71,10 @@ public class IMUController {
     }
 
     /*
+    * Code from previous programmer
      * Get current cumulative angle rotation from last reset.
      * @return Angle in degrees. - = left, + = right.
+     *
      */
     public float GetAngle()
     {
@@ -81,9 +83,7 @@ public class IMUController {
          * returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
          * 180 degrees. We detect this transition and track the total cumulative angle of rotation.
          */
-
         float angles = imu1.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-
         float deltaAngle = angles - lastAngles;
 
         //angles += 180;

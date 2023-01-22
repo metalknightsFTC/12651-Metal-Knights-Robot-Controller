@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Blinker;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.Enums.Motor;
 
@@ -13,18 +12,16 @@ public class ProjectAluminumKnight extends LinearOpMode {
     private Servo verticalR;
     private Servo horizontalR;
     private IMUController imu;
-    private DriveTrainCode driveTrainCode;
+    private DriveTrainController driveTrainController;
     private LiftManager lift;
     private NavigationManager navSystem;
     private static final float slowSpeed = .3f;
     private static final float regularSpeed = .7f;
     private static final float fastSpeed = 1f;
     public static float currentSpeed = .6f;
-    private float targetFlipOut = 1000;
     private float targetLockHeading;
     private boolean liftLimits = true;
     private boolean hasLocked = false;
-    private boolean flipped = false;
 
     @Override
     public void runOpMode()
@@ -70,16 +67,16 @@ public class ProjectAluminumKnight extends LinearOpMode {
         {
             currentSpeed = regularSpeed;
         }
-        if(driveTrainCode.RSX >= 0.001 || driveTrainCode.RSX <= -0.001 ||
-                !(driveTrainCode.LSX > 0.02f || driveTrainCode.LSX < -0.02f) && !gamepad1.right_stick_button)
+        if(driveTrainController.RSX >= 0.001 || driveTrainController.RSX <= -0.001 ||
+                !(driveTrainController.LSX > 0.02f || driveTrainController.LSX < -0.02f) && !gamepad1.right_stick_button)
         {
             imu.ResetAngle();
-            driveTrainCode.UpdateDriveTrain(currentSpeed, StrafeCorrection());
+            driveTrainController.UpdateDriveTrain(currentSpeed, StrafeCorrection());
         }
         else
         {
             SoulsLikeTargetLock();
-            driveTrainCode.UpdateDriveTrain(currentSpeed,0);
+            driveTrainController.UpdateDriveTrain(currentSpeed,0);
         }
     }
 
@@ -125,7 +122,6 @@ public class ProjectAluminumKnight extends LinearOpMode {
         //endregion
         //region lifter code
         lift.Lift((gamepad1.right_trigger - gamepad1.left_trigger) * 20f, liftLimits);
-        telemetry.addData("Ticks: ",lift.currentHeight);
         //endregion
     }
 
@@ -138,11 +134,11 @@ public class ProjectAluminumKnight extends LinearOpMode {
         horizontalR = hardwareMap.get(Servo.class, "alignment");
         verticalR = hardwareMap.get(Servo.class, "pivot");
         grabber = hardwareMap.get(Servo.class,"grabber");
-        driveTrainCode = new DriveTrainCode(gamepad1,hardwareMap);
-        driveTrainCode.InvertMotorDirection(Motor.backLeft);
-        driveTrainCode.InvertMotorDirection(Motor.frontLeft);
+        driveTrainController = new DriveTrainController(gamepad1,hardwareMap);
+        driveTrainController.InvertMotorDirection(Motor.backLeft);
+        driveTrainController.InvertMotorDirection(Motor.frontLeft);
         imu.ResetAngle();
-        navSystem = new NavigationManager(hardwareMap, imu, driveTrainCode);
+        navSystem = new NavigationManager(hardwareMap, imu, driveTrainController);
         telemetry.addData("Status", "Initialized");
         telemetry.update();
     }

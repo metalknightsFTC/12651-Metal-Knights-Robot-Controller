@@ -15,7 +15,7 @@ public class NavigationManager
 
     public static double targetHeading = 0;
 
-    private DriveTrainCode driveTrainCode;
+    private DriveTrainController driveTrainController;
 
     private IMUController imu;
     public static int tpr = 8192;//found on REV encoder specs chart
@@ -23,13 +23,13 @@ public class NavigationManager
     public static float rampDown = 3f;
     double errorMargin = .12f;
 
-    public NavigationManager(HardwareMap hardwareMap,IMUController imu, DriveTrainCode driveTrainCode)
+    public NavigationManager(HardwareMap hardwareMap,IMUController imu, DriveTrainController driveTrainController)
     {
         right = hardwareMap.get(DcMotorEx.class,"right");
         left = hardwareMap.get(DcMotorEx.class,"left");
         rear = hardwareMap.get(DcMotorEx.class,"rear");
         this.imu = imu;
-        this.driveTrainCode = driveTrainCode;
+        this.driveTrainController = driveTrainController;
         imu.ResetAngle();
         targetHeading = imu.GetAngle();
     }
@@ -109,13 +109,13 @@ public class NavigationManager
                 break;
             }
 
-            driveTrainCode.UpdateDriveTrain(new Vector3(x, y, z));
+            driveTrainController.UpdateDriveTrain(new Vector3(x, y, z));
         }
         //endregion
         ResetNavigationSystem();
         totalMovementX = 0;
         totalMovementZ = 0;
-        driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
+        driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
         to = 0;
     }
     //endregion
@@ -171,9 +171,9 @@ public class NavigationManager
             deltaNC = (float) (imu.GetAngle()-target);
             float delta = (float) deltaNC / 20;
 
-            driveTrainCode.UpdateDriveTrain(new Vector3(0, speed * delta, 0));
+            driveTrainController.UpdateDriveTrain(new Vector3(0, speed * delta, 0));
         }
-        driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
+        driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
         targetHeading = imu.GetAngle();
         ResetNavigationSystem();
     }

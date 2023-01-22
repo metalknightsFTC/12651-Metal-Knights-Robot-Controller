@@ -33,7 +33,7 @@ public class AutoFunctions extends LinearOpMode {
     private StartPoint startPoint = StartPoint.UnSet;
     private Servo grabber;
     private Servo flipOut;
-    private DriveTrainCode driveTrainCode;
+    private DriveTrainController driveTrainController;
     Servo verticalR;
     Servo horizontalR;
     private LiftManager liftManager;
@@ -55,7 +55,6 @@ public class AutoFunctions extends LinearOpMode {
     Vector2 stackLocation;
     int breakout = 0;
     float junctionAlignment = 0;
-    float blueOffset = 0;
     @SuppressLint("SdCardPath")
     private static String TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/model.tflite";
 
@@ -88,7 +87,6 @@ public class AutoFunctions extends LinearOpMode {
         CheckForModel();
         SetRoutine();
         RunRoutine();
-        //GrabCone();
     }
 
     //region Run the Autonomous
@@ -102,7 +100,7 @@ public class AutoFunctions extends LinearOpMode {
                     Move(0, 15.5f, .5f);
                 }else
                 {
-                    Move(0, 40f, .5f);
+                    Move(0, 26f, .5f);
                 }
                 //endregion
                 break;
@@ -115,7 +113,7 @@ public class AutoFunctions extends LinearOpMode {
                     sleep(100);
                 }else
                 {
-                    Move(0, 16f, .5f);
+                    Move(0, 3f, .5f);
                 }
                 //endregion
                 break;
@@ -128,7 +126,7 @@ public class AutoFunctions extends LinearOpMode {
                     sleep(100);
                 }else
                 {
-                    Move(0, -4f, .5f);
+                    Move(0, -17f, .5f);
                 }
                 //endregion
                 break;
@@ -331,7 +329,7 @@ public class AutoFunctions extends LinearOpMode {
                     break;
                 }
 
-                driveTrainCode.UpdateDriveTrain(new Vector3(x, y, z));
+                driveTrainController.UpdateDriveTrain(new Vector3(x, y, z));
         }
         //endregion
         right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -339,19 +337,19 @@ public class AutoFunctions extends LinearOpMode {
         rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         totalMovementX = 0;
         totalMovementZ = 0;
-        driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
+        driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
         to = 0;
     }
     public void SnapToHeading(float target, float speed){
         float deltaNC = (imu.GetAngle() - target);
-        while (deltaNC > .12f || deltaNC < -.12f)
+        while (deltaNC > .25f || deltaNC < -.25f)
         {
             deltaNC = (imu.GetAngle()-target);
             float delta = deltaNC / 20;
 
-            driveTrainCode.UpdateDriveTrain(new Vector3(0, speed * delta, 0));
+            driveTrainController.UpdateDriveTrain(new Vector3(0, speed * delta, 0));
         }
-        driveTrainCode.UpdateDriveTrain(new Vector3(0,0,0));
+        driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
         targetHeading = imu.GetAngle();
         right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -512,6 +510,7 @@ public class AutoFunctions extends LinearOpMode {
     @SuppressLint("SdCardPath")
     private void ScanForStack()
     {
+        ii = 0;
         SetCameraAngle(.04,.27);
         LABELS = new String[] {"Blue Stack","Red Stack"};
         TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/Stack.tflite";
@@ -572,12 +571,12 @@ public class AutoFunctions extends LinearOpMode {
                     telemetry.update();
                     if(recognition.getLabel().equals("Red Stack"))
                     {
-                        offset = 2.9f;
+                        offset = -.3f;
                     }else if(recognition.getLabel().equals("Blue Stack"))
                     {
-                        offset = .9f;
+                        offset = 1.35f;
                     }
-                    if(ii < 20)
+                    if(ii < 10)
                     {
                         averageBound.add(recognition.getRight()-recognition.getLeft());
                         ii++;
@@ -608,7 +607,7 @@ public class AutoFunctions extends LinearOpMode {
     boolean xScan()
     {
         SetCameraAngle(.04,.27);
-        stackLocation = new Vector2(0,34.2f);
+        //stackLocation = new Vector2(0,34.9f);
         SetCameraAngle(.04,.27);
         if (tfod != null)
         {
@@ -623,16 +622,6 @@ public class AutoFunctions extends LinearOpMode {
             {
                 telemetry.addData("# Object Detected", updatedRecognitions.size());
                 telemetry.update();
-                if(updatedRecognitions.size() == 0)
-                {
-                    to++;
-                    return false;
-                }
-                if(to >= 50)
-                {
-                    problem = true;
-                    return true;
-                }
                 // step through the list of recognitions and display boundary info.
                 for (Recognition recognition : updatedRecognitions)
                 {
@@ -644,13 +633,14 @@ public class AutoFunctions extends LinearOpMode {
                     }else if(recognition.getLabel().equals("Blue Stack"))
                     {
                         blue = true;
-                        offset = 3.2f;
+                        offset = 0f;
                     }
-                    if(ii < 20)
+                    if(ii < 10)
                     {
                         averageBound.add(recognition.getRight()-recognition.getLeft());
                         ii++;
                         telemetry.addData("index: ", ii);
+                        telemetry.update();
                         return false;
                     }
                     for (int iii = 0; iii < ii; iii++)
@@ -696,18 +686,21 @@ public class AutoFunctions extends LinearOpMode {
         //polynomial
         float z =  (float)(108f + ((-1.28f * deltaBound) + (0.00462f * Math.pow(deltaBound,2))));
 
-        return new Vector2(x,z - (31.7f + offset));
+        return new Vector2(x,4.7f);
     }
 
     int breakFromScan;
     private void JunctionAlignment()
     {
+        averageBound = new ArrayList<>();
+        avgBound = 0;
+        ii = 0;
         if(tfod != null)
         {
             while (!xScan())
             {
                 telemetry.addData("Scanning", "...");
-                if(breakFromScan >= 100000)
+                if(breakFromScan >= 150000)
                 {
                     junctionAlignment = 0;
                     telemetry.addData("Z: ","Fail");
@@ -734,10 +727,10 @@ public class AutoFunctions extends LinearOpMode {
         left = hardwareMap.get(DcMotorEx.class, "left");
         rear = hardwareMap.get(DcMotorEx.class, "rear");
 
-        driveTrainCode = new DriveTrainCode(gamepad1 ,hardwareMap);
+        driveTrainController = new DriveTrainController(gamepad1 ,hardwareMap);
 
-        driveTrainCode.InvertMotorDirection(Motor.backRight);
-        driveTrainCode.InvertMotorDirection(Motor.frontRight);
+        driveTrainController.InvertMotorDirection(Motor.backRight);
+        driveTrainController.InvertMotorDirection(Motor.frontRight);
 
         right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -797,11 +790,11 @@ public class AutoFunctions extends LinearOpMode {
         Move(3.5f,0f,.4f);
         //go to junction and lift
         sleep(100);
-        Move(0f,-14.3f,.4f);
+        Move(0f,-14.8f,.4f);
         sleep(100);
         liftManager.Lift(5);
         sleep(100);
-        Move(14f,0f,.4f);
+        Move(14.2f,0f,.4f);
         sleep(100);
         OpenClaw();
         sleep(100);
@@ -811,7 +804,7 @@ public class AutoFunctions extends LinearOpMode {
         sleep(100);
         liftManager.Lift(0);
         sleep(100);
-        Move(0,4.2f,.4f);
+        Move(0,15f,.4f);
         sleep(100);
         SnapToHeading(0,.4f);
         GrabCone();
@@ -826,7 +819,7 @@ public class AutoFunctions extends LinearOpMode {
         Move(3.5f,0f,.4f);
         sleep(100);
         //move up to junction
-        Move(0f,9.6f,.4f);
+        Move(0f,9.4f,.4f);
         sleep(100);
         liftManager.Lift(5);
         sleep(100);
@@ -869,17 +862,17 @@ public class AutoFunctions extends LinearOpMode {
     {
         Move(3.5f,0f,.4f);
         sleep(100);
-        Move(0f,9f,.5f);
+        Move(0f,8.2f,.4f);
         sleep(100);
         liftManager.Lift(5);
         sleep(100);
-        Move(13.8f,0f,.5f);
+        Move(13.5f,0f,.4f);
         sleep(100);
         OpenClaw();
         sleep(100);
         Move(0f,-2f,.4f);
         sleep(100);
-        Move(-13.8f,0f,.5f);
+        Move(-13.5f,0f,.4f);
         sleep(100);
         liftManager.Lift(0);
         sleep(100);
@@ -888,8 +881,6 @@ public class AutoFunctions extends LinearOpMode {
         Move(46,0f,.5f);
     }
 
-    float coneOffset = 0;
-
     private void GrabCone()
     {
         OpenClaw();
@@ -897,8 +888,6 @@ public class AutoFunctions extends LinearOpMode {
         ScanForStack();
         if(!problem)
         {
-            coneOffset = stackLocation.z - 40f;
-            //initJunctionAlignment();
             liftManager.Lift(4);
             telemetry.addData("Position: ", stackLocation.toString());
             telemetry.update();
@@ -933,11 +922,11 @@ public class AutoFunctions extends LinearOpMode {
         sleep(100);
         Move(0, (stackLocation.z), .4f);
         sleep(100);
-        Move(-9.9f,0,.4f);
+        Move(-10.5f,0,.4f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(9.9f,0,.4f);
+        Move(10.5f,0,.4f);
         sleep(100);
     }
 

@@ -7,7 +7,7 @@ import org.firstinspires.ftc.teamcode.Vectors.*;
 
 import org.firstinspires.ftc.teamcode.Enums.Motor;
 
-public class DriveTrainCode {
+public class DriveTrainController {
     //Gamepad inputs
     public double LSX;
     public double LSY;
@@ -23,7 +23,7 @@ public class DriveTrainCode {
     //local hardware map
     HardwareMap lHardwareMap;
 
-    public  DriveTrainCode(Gamepad gamepad , HardwareMap hardwareMap)
+    public DriveTrainController(Gamepad gamepad , HardwareMap hardwareMap)
     {
         InitializeGamepad(gamepad);
         InitializeHardware(hardwareMap);

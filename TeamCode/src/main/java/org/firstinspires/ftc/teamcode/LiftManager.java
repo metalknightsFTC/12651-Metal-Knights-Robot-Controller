@@ -10,7 +10,6 @@ public class LiftManager
     private int level;
     private int[] liftHeights = new int[8];
     private int targetRotations = 0;
-    public int currentHeight;
 
     public LiftManager (HardwareMap hardwareMapG)
     {
@@ -52,7 +51,6 @@ public class LiftManager
         lift.setTargetPosition(targetRotations);
         lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         lift.setPower(1);
-        currentHeight = lift.getCurrentPosition();
     }
 
     public void Reset()

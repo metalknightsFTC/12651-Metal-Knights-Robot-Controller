@@ -33,6 +33,7 @@ import android.annotation.SuppressLint;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -56,6 +57,8 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode
     private VuforiaLocalizer vuforia;
 
     private TFObjectDetector tfod;
+    Servo verticalR;
+    Servo horizontalR;
 
     @Override
     public void runOpMode()
@@ -75,6 +78,9 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode
             // (typically 16/9).
             tfod.setZoom(1.0, 16.0/9.0);
         }
+        horizontalR = hardwareMap.get(Servo.class,"alignment");
+        verticalR = hardwareMap.get(Servo.class,"pivot");
+
 
         telemetry.addData("Status: ", "Initialized");
         telemetry.update();
@@ -83,6 +89,7 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode
         {
             while (opModeIsActive())
             {
+                SetCameraAngle(.04,.27);
                 if (tfod != null)
                 {
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
@@ -93,12 +100,13 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode
                         {
                             float bound = recognition.getRight() + recognition.getLeft();
                             float deltaBound = (recognition.getRight()-recognition.getLeft()) / 2;
-                            float x = (-.0587f * ((bound) / 2)) + 21.492f;//(-.043f * ((bound) / 2)) + 14.7f;
+                            float x = (-.0587f * ((bound) / 2)) + 21.492f;
+                            //polynomial
                             float z =  (float)(108f + ((-1.28f * deltaBound) + (0.00462f * Math.pow(deltaBound,2))));
 
                             telemetry.addData("Label", recognition.getLabel());
                             telemetry.addData("X: ", (x));
-                            telemetry.addData("Z: ",(z - 31.7f));
+                            telemetry.addData("Z: ",(z - (31.7f + 18f)));
                             telemetry.addData("","\n");
                         }
                         telemetry.update();
@@ -131,5 +139,9 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
 
         tfod.loadModelFromFile(TFOD_MODEL_ASSET, LABELS);
+    }
+    private void SetCameraAngle(double x, double z){
+        verticalR.setPosition(z);
+        horizontalR.setPosition(x);
     }
 }
