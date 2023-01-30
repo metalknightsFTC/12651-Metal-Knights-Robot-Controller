@@ -94,8 +94,8 @@ public class NavigationManager
 
             float deltaX = (float) (X - totalMovementX) / rampDown;
             float deltaZ = (float) (Z - totalMovementZ) / rampDown;
-            deltaX = Range(deltaX, -1, 1);
-            deltaZ = Range(deltaZ, -1, 1);
+            deltaX = Range(deltaX);
+            deltaZ = Range(deltaZ);
             float turnMod = (float) imu.AngleDeviation(targetHeading) / 20;
 
             float x = speed * deltaX;
@@ -112,50 +112,31 @@ public class NavigationManager
             driveTrainController.UpdateDriveTrain(new Vector3(x, y, z));
         }
         //endregion
-        ResetNavigationSystem();
+        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         totalMovementX = 0;
         totalMovementZ = 0;
         driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
         to = 0;
     }
-    //endregion
-
-    public Vector2 DeltaMovement()
+    public void SnapToHeading(float target, float speed)
     {
-        //how far the robot has left to move
-        float xDist = 0;
-        float zDist = 0;
-        //how far the robot has moved so far
-        //previously measured encoder positions
-        double rearEncoderRotation;
-        double rightEncoderRotation;
-        double leftEncoderRotation;
-        //currently measured encoder rotation
-        double currentLeftEncoderRotation = 0;
-        double currentRightEncoderRotation = 0;
-        double currentRearEncoderRotation = 0;
-        //the distance between the current encoder positions and the previous encoder positions
-        double deltaLeft;
-        double deltaRight;
-        double deltaBack;
-        //region checks
-        //region Odometry Math
-        leftEncoderRotation = currentLeftEncoderRotation;
-        rightEncoderRotation = currentRightEncoderRotation;
-        rearEncoderRotation = currentRearEncoderRotation;
+        float deltaNC = (imu.GetAngle() - target);
+        while (deltaNC > .25f || deltaNC < -.25f)
+        {
+            deltaNC = (imu.GetAngle()-target);
+            float delta = deltaNC / 20;
 
-        currentRightEncoderRotation = right.getCurrentPosition();
-        currentRearEncoderRotation = rear.getCurrentPosition();
-        currentLeftEncoderRotation = left.getCurrentPosition();
-
-        deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / tpr) * c;
-        deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / tpr) * c;
-        deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
-        //endregion
-        zDist += ((deltaLeft + deltaRight) / 2);
-        xDist += deltaBack;
-        return new Vector2(xDist,zDist);
+            driveTrainController.UpdateDriveTrain(new Vector3(0, speed * delta, 0));
+        }
+        driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
+        targetHeading = imu.GetAngle();
+        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
+    //endregion
 
     public void ResetNavigationSystem()
     {
@@ -164,28 +145,26 @@ public class NavigationManager
         rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
-    public void SnapToHeading(float target, float speed){
-        float deltaNC = (float) (imu.GetAngle() - target);
-        while (deltaNC > .1f || deltaNC < -.1f)
-        {
-            deltaNC = (float) (imu.GetAngle()-target);
-            float delta = (float) deltaNC / 20;
-
-            driveTrainController.UpdateDriveTrain(new Vector3(0, speed * delta, 0));
-        }
-        driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
-        targetHeading = imu.GetAngle();
-        ResetNavigationSystem();
-    }
-
     //region lock input between 2 numbers
-    private float Range(float in,float lower, float upper){
+    private float Range(float in,float lower, float upper)
+    {
         float out = in;
         if(out < lower){
             out = lower;
         }
         if(out > upper){
             out = upper;
+        }
+        return out;
+    }
+    private float Range(float in)
+    {
+        float out = in;
+        if(out < -1){
+            out = -1;
+        }
+        if(out > 1){
+            out = 1;
         }
         return out;
     }

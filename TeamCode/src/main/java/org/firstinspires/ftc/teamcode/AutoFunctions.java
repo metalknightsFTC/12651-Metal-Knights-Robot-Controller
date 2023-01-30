@@ -34,6 +34,7 @@ public class AutoFunctions extends LinearOpMode {
     private Servo grabber;
     private Servo flipOut;
     private DriveTrainController driveTrainController;
+    private NavigationManager navSystem;
     Servo verticalR;
     Servo horizontalR;
     private LiftManager liftManager;
@@ -97,10 +98,10 @@ public class AutoFunctions extends LinearOpMode {
                 RedLeftSide();
                 //move to parking
                 if(!problem) {
-                    Move(0, 15.5f, .5f);
+                    navSystem.Move(0, 15.5f, .5f);
                 }else
                 {
-                    Move(0, 26f, .5f);
+                    navSystem.Move(0, 26f, .5f);
                 }
                 //endregion
                 break;
@@ -109,11 +110,11 @@ public class AutoFunctions extends LinearOpMode {
                 //region Red Left Case 1 helmet code
                 RedLeftSide();
                 if(!problem) {
-                    Move(0, -3f, .5f);
+                    navSystem.Move(0, -3f, .5f);
                     sleep(100);
                 }else
                 {
-                    Move(0, 3f, .5f);
+                    navSystem.Move(0, 3f, .5f);
                 }
                 //endregion
                 break;
@@ -122,11 +123,11 @@ public class AutoFunctions extends LinearOpMode {
                 RedLeftSide();
                 if(!problem) {
 
-                    Move(0, -23f, .58f);
+                    navSystem.Move(0, -23f, .58f);
                     sleep(100);
                 }else
                 {
-                    Move(0, -17f, .5f);
+                    navSystem.Move(0, -17f, .5f);
                 }
                 //endregion
                 break;
@@ -140,14 +141,14 @@ public class AutoFunctions extends LinearOpMode {
             case 4:
                 //region Red Right 2 Helmet code
                 RedRightSide();
-                Move(0,-19f,.58f);
+                navSystem.Move(0,-19f,.58f);
                 sleep(3200);
                 //endregion
                 break;
             case 5:
                 //region Red Right 2 Shield code
                 RedRightSide();
-                Move(0,-42.9f,.58f);
+                navSystem.Move(0,-42.9f,.58f);
                 //SnapToHeading(90,.58f);
                 //endregion
                 break;
@@ -167,12 +168,12 @@ public class AutoFunctions extends LinearOpMode {
                 break;
             case 10:
                 BlueRightSide();
-                Move(0,-19f,.58f);
+                navSystem.Move(0,-19f,.58f);
                 sleep(3200);
                 break;
             case 11:
                 BlueRightSide();
-                Move(0,-42.9f,.58f);
+                navSystem.Move(0,-42.9f,.58f);
                 break;
             default:
                 break;
@@ -254,109 +255,6 @@ public class AutoFunctions extends LinearOpMode {
     }
     //endregion
 
-    //Drive x inches in selected direction at selected speed using odometry to record distance and the internal measuring unit(IMU) to correct for drift
-    //slows down after a threshold is reached
-    //region Movement code
-    //the total amount the robot has moved
-    int to = 0;
-    double totalMovementX = 0;
-    double totalMovementZ = 0;
-    public void Move(float X, float Z, float speed)
-    {
-        //how far the robot has left to move
-        double xDist = X;
-        double zDist = Z;
-        //how far the robot has moved so far
-        //previously measured encoder positions
-        double rearEncoderRotation;
-        double rightEncoderRotation;
-        double leftEncoderRotation;
-        //currently measured encoder rotation
-        double currentLeftEncoderRotation = 0;
-        double currentRightEncoderRotation = 0;
-        double currentRearEncoderRotation = 0;
-        //the distance between the current encoder positions and the previous encoder positions
-        double deltaLeft;
-        double deltaRight;
-        double deltaBack;
-        //ticks per revolution
-        if(speed > .8f)
-        {
-            rampDown = 20f;
-        }else if(speed > .6f)
-        {
-            rampDown = 12.5f;
-        }else
-        {
-            rampDown = 2.75f;
-        }
-        //region checks
-        while (xDist < -errorMargin || xDist > errorMargin || zDist < -errorMargin || zDist > errorMargin && opModeIsActive()) {
-                //region Odometry Math
-                leftEncoderRotation = currentLeftEncoderRotation;
-                rightEncoderRotation = currentRightEncoderRotation;
-                rearEncoderRotation = currentRearEncoderRotation;
-
-                currentRightEncoderRotation = right.getCurrentPosition();
-                currentRearEncoderRotation = rear.getCurrentPosition();
-                currentLeftEncoderRotation = left.getCurrentPosition();
-
-                deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / tpr) * c;
-                deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / tpr) * c;
-                deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
-                //endregion
-
-                totalMovementZ += ((deltaLeft + deltaRight) / 2);
-                totalMovementX += deltaBack;
-
-                xDist = X - totalMovementX;
-                zDist = Z - totalMovementZ;
-
-                float deltaX = (float) (X - totalMovementX) / rampDown;
-                float deltaZ = (float) (Z - totalMovementZ) / rampDown;
-                deltaX = Range(deltaX);
-                deltaZ = Range(deltaZ);
-                float turnMod = (float) imu.AngleDeviation(targetHeading) / 20;
-
-                float x = speed * deltaX;
-                float y = -turnMod * speed;
-                float z = speed * deltaZ;
-                float distX = (float)Math.pow(deltaX,3f);
-                float distZ = (float)Math.pow(deltaZ,3f);
-
-                if((distX < .03f && distX > -.03f) && (distZ < .03f && distZ > -.03f))
-                {
-                    break;
-                }
-
-                driveTrainController.UpdateDriveTrain(new Vector3(x, y, z));
-        }
-        //endregion
-        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        totalMovementX = 0;
-        totalMovementZ = 0;
-        driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
-        to = 0;
-    }
-    public void SnapToHeading(float target, float speed){
-        float deltaNC = (imu.GetAngle() - target);
-        while (deltaNC > .25f || deltaNC < -.25f)
-        {
-            deltaNC = (imu.GetAngle()-target);
-            float delta = deltaNC / 20;
-
-            driveTrainController.UpdateDriveTrain(new Vector3(0, speed * delta, 0));
-        }
-        driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
-        targetHeading = imu.GetAngle();
-        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    }
-    //endregion
-
     //region TensorFlow code
     boolean OperateTensorFlow() {
         if (tfod != null) {
@@ -384,28 +282,6 @@ public class AutoFunctions extends LinearOpMode {
         return false;
     }
 
-    private float Range(float in,float lower, float upper)
-    {
-        float out = in;
-        if(out < lower){
-            out = lower;
-        }
-        if(out > upper){
-            out = upper;
-        }
-        return out;
-    }
-    private float Range(float in)
-    {
-        float out = in;
-        if(out < -1){
-            out = -1;
-        }
-        if(out > 1){
-            out = 1;
-        }
-        return out;
-    }
     //endregion
     //region Use Tensorflow
     void CheckEndPoint(String label)
@@ -507,6 +383,7 @@ public class AutoFunctions extends LinearOpMode {
     }
     //endregion
 
+    int to = 0;
     @SuppressLint("SdCardPath")
     private void ScanForStack()
     {
@@ -530,14 +407,13 @@ public class AutoFunctions extends LinearOpMode {
                 if(breakout >= 150000)
                 {
                     problem = true;
-                    Move(2,0,.4f);
+                    navSystem.Move(2,0,.4f);
                     return;
                 }
                 breakout++;
             }
         }
     }
-
     boolean OperateStackScan()
     {
         SetCameraAngle(.04,.27);
@@ -738,7 +614,7 @@ public class AutoFunctions extends LinearOpMode {
 
         right.setDirection(DcMotorSimple.Direction.REVERSE);
         rear.setDirection(DcMotorSimple.Direction.REVERSE);
-
+        navSystem = new NavigationManager(hardwareMap, imu, driveTrainController);
         SetStartPoint();
         InitVuforia();
         InitTfod();
@@ -787,26 +663,26 @@ public class AutoFunctions extends LinearOpMode {
     {
         SetCameraAngle(.04,.27);
         //pushback from wall
-        Move(3.5f,0f,.4f);
+        navSystem.Move(3.5f,0f,.4f);
         //go to junction and lift
         sleep(100);
-        Move(0f,-14.8f,.4f);
+        navSystem.Move(0f,-14.8f,.4f);
         sleep(100);
         liftManager.Lift(5);
         sleep(100);
-        Move(14.2f,0f,.4f);
+        navSystem.Move(14.2f,0f,.4f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(0f,-2f,.4f);
+        navSystem.Move(0f,-2f,.4f);
         sleep(100);
-        Move(36f,0f, .7f);
+        navSystem.Move(36f,0f, .7f);
         sleep(100);
         liftManager.Lift(0);
         sleep(100);
-        Move(0,15f,.4f);
+        navSystem.Move(0,15f,.4f);
         sleep(100);
-        SnapToHeading(0,.4f);
+        navSystem.SnapToHeading(0,.4f);
         GrabCone();
     }
 
@@ -816,69 +692,48 @@ public class AutoFunctions extends LinearOpMode {
     {
         SetCameraAngle(.04,.27);
         //pull off wall
-        Move(3.5f,0f,.4f);
+        navSystem.Move(3.5f,0f,.4f);
         sleep(100);
         //move up to junction
-        Move(0f,9.4f,.4f);
+        navSystem.Move(0f,9.4f,.4f);
         sleep(100);
         liftManager.Lift(5);
         sleep(100);
-        Move(13.8f,0,.4f);
+        navSystem.Move(13.8f,0,.4f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(0,-2f,.4f);
+        navSystem.Move(0,-2f,.4f);
         sleep(100);
-        Move(-13.8f,0,.4f);
+        navSystem.Move(-13.8f,0,.4f);
         liftManager.Lift(0);
         sleep(100);
-        Move(0,20f,.4f);
+        navSystem.Move(0,20f,.4f);
         sleep(100);
-        Move(46f,0f,.4f);
+        navSystem.Move(46f,0f,.4f);
     }
-/*
-    private void BlueLeftSide()
-    {
-        //pushback from wall
-        Move(3.5f,0f,.4f);
-        //go to junction and lift
-        sleep(100);
-        Move(0f,-14.3f,.4f);
-        sleep(100);
-        liftManager.Lift(5);
-        sleep(100);
-        Move(16.7f,0f,.4f);
-        sleep(100);
-        OpenClaw();
-        sleep(100);
-        Move(0,-2.7f,.5f);
-        sleep(100);
-        liftManager.Lift(0);
-        sleep(100);
-        Move(47.8f,2.7f, .55f);
-    }
-*/
+
     private void BlueRightSide()
     {
-        Move(3.5f,0f,.4f);
+        navSystem.Move(3.5f,0f,.4f);
         sleep(100);
-        Move(0f,8.2f,.4f);
+        navSystem.Move(0f,8.2f,.4f);
         sleep(100);
         liftManager.Lift(5);
         sleep(100);
-        Move(13.5f,0f,.4f);
+        navSystem.Move(13.5f,0f,.4f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(0f,-2f,.4f);
+        navSystem.Move(0f,-2f,.4f);
         sleep(100);
-        Move(-13.5f,0f,.4f);
+        navSystem.Move(-13.5f,0f,.4f);
         sleep(100);
         liftManager.Lift(0);
         sleep(100);
-        Move(0f,20f,.4f);
+        navSystem.Move(0f,20f,.4f);
         sleep(100);
-        Move(46,0f,.5f);
+        navSystem.Move(46,0f,.5f);
     }
 
     private void GrabCone()
@@ -892,17 +747,17 @@ public class AutoFunctions extends LinearOpMode {
             telemetry.addData("Position: ", stackLocation.toString());
             telemetry.update();
             sleep(100);
-            Move(-stackLocation.x, 0, .3f);
+            navSystem.Move(-stackLocation.x, 0, .3f);
             sleep(100);
-            Move(0, stackLocation.z, .5f);
+            navSystem.Move(0, stackLocation.z, .5f);
             sleep(100);
             CloseClaw();
             sleep(750);
             liftManager.Lift(5);
             sleep(100);
-            SnapToHeading(0,.4f);
+            navSystem.SnapToHeading(0,.4f);
             sleep(100);
-            Move(0, -24.5f, .4f);
+            navSystem.Move(0, -24.5f, .4f);
             sleep(100);
             DropConeLeft();
             sleep(100);
@@ -915,18 +770,18 @@ public class AutoFunctions extends LinearOpMode {
     private void DropConeLeft()
     {
         sleep(100);
-        SnapToHeading(0,.4f);
+        navSystem.SnapToHeading(0,.4f);
         JunctionAlignment();
         sleep(100);
-        Move(-stackLocation.x, 0, .4f);
+        navSystem.Move(-stackLocation.x, 0, .4f);
         sleep(100);
-        Move(0, (stackLocation.z), .4f);
+        navSystem.Move(0, (stackLocation.z), .4f);
         sleep(100);
-        Move(-10.5f,0,.4f);
+        navSystem.Move(-10.5f,0,.4f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        Move(10.5f,0,.4f);
+        navSystem.Move(10.5f,0,.4f);
         sleep(100);
     }
 
