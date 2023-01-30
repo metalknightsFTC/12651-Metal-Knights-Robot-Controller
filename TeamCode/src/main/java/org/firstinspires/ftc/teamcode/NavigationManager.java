@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.Vectors.Vector2;
@@ -28,6 +29,11 @@ public class NavigationManager
         right = hardwareMap.get(DcMotorEx.class,"right");
         left = hardwareMap.get(DcMotorEx.class,"left");
         rear = hardwareMap.get(DcMotorEx.class,"rear");
+        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        right.setDirection(DcMotorSimple.Direction.REVERSE);
+        rear.setDirection(DcMotorSimple.Direction.REVERSE);
         this.imu = imu;
         this.driveTrainController = driveTrainController;
         imu.ResetAngle();
@@ -59,7 +65,7 @@ public class NavigationManager
         double deltaLeft;
         double deltaRight;
         double deltaBack;
-        //ticks per revolution
+        //configure the ramp down based on target speed
         if(speed > .8f)
         {
             rampDown = 20f;
@@ -112,9 +118,7 @@ public class NavigationManager
             driveTrainController.UpdateDriveTrain(new Vector3(x, y, z));
         }
         //endregion
-        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        ResetNavigationSystem();
         totalMovementX = 0;
         totalMovementZ = 0;
         driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
@@ -132,9 +136,7 @@ public class NavigationManager
         }
         driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
         targetHeading = imu.GetAngle();
-        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        ResetNavigationSystem();
     }
     //endregion
 

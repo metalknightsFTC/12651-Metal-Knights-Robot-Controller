@@ -26,9 +26,6 @@ import java.util.List;
 @Autonomous
 public class AutoFunctions extends LinearOpMode {
 
-    private DcMotorEx right;
-    private DcMotorEx left;
-    private DcMotorEx rear;
     private EndPoint endPoint = EndPoint.unset;
     private StartPoint startPoint = StartPoint.UnSet;
     private Servo grabber;
@@ -44,18 +41,15 @@ public class AutoFunctions extends LinearOpMode {
     private IMUController imu;
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
-    public static int tpr = 8192;//found on REV encoder specs chart
-    public static double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
-    public static float rampDown = 3f;
     public List<Float> averageBound = new ArrayList<>();
     float avgBound;
     int ii = 0;
     boolean problem = false;
     float offset = 0f;
-    double errorMargin = .12f;
     Vector2 stackLocation;
     int breakout = 0;
     float junctionAlignment = 0;
+
     @SuppressLint("SdCardPath")
     private static String TFOD_MODEL_ASSET = "/sdcard/FIRST/tflitemodels/model.tflite";
 
@@ -599,21 +593,11 @@ public class AutoFunctions extends LinearOpMode {
         grabber = hardwareMap.get(Servo.class,"grabber");
         flipOut = hardwareMap.get(Servo.class,"flipOut");
 
-        right = hardwareMap.get(DcMotorEx.class, "right");
-        left = hardwareMap.get(DcMotorEx.class, "left");
-        rear = hardwareMap.get(DcMotorEx.class, "rear");
-
         driveTrainController = new DriveTrainController(gamepad1 ,hardwareMap);
 
         driveTrainController.InvertMotorDirection(Motor.backRight);
         driveTrainController.InvertMotorDirection(Motor.frontRight);
 
-        right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        right.setDirection(DcMotorSimple.Direction.REVERSE);
-        rear.setDirection(DcMotorSimple.Direction.REVERSE);
         navSystem = new NavigationManager(hardwareMap, imu, driveTrainController);
         SetStartPoint();
         InitVuforia();
