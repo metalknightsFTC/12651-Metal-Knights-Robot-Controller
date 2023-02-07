@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.UtilityClasses;
 import org.firstinspires.ftc.teamcode.Vectors.*;
 
 public class PathMaster {

@@ -8,16 +8,18 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
+
 import org.firstinspires.ftc.teamcode.Enums.EndPoint;
 import org.firstinspires.ftc.teamcode.Enums.Motor;
 import org.firstinspires.ftc.teamcode.Enums.StartPoint;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Blinker;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+import org.firstinspires.ftc.teamcode.UtilityClasses.DriveTrainController;
+import org.firstinspires.ftc.teamcode.UtilityClasses.IMUController;
+import org.firstinspires.ftc.teamcode.UtilityClasses.LiftManager;
+import org.firstinspires.ftc.teamcode.UtilityClasses.NavigationManager;
 import org.firstinspires.ftc.teamcode.Vectors.*;
 
 import java.util.ArrayList;
@@ -79,9 +81,10 @@ public class AutoFunctions extends LinearOpMode {
         CloseClaw();
         imu.ResetAngle();
         targetHeading = imu.GetAngle();
-        CheckForModel();
-        SetRoutine();
-        RunRoutine();
+        GrabCone();
+        //CheckForModel();
+        //SetRoutine();
+        //RunRoutine();
     }
 
     //region Run the Autonomous
@@ -556,7 +559,7 @@ public class AutoFunctions extends LinearOpMode {
         //polynomial
         float z =  (float)(108f + ((-1.28f * deltaBound) + (0.00462f * Math.pow(deltaBound,2))));
 
-        return new Vector2(x,4.7f);
+        return new Vector2(x,7.15f);
     }
 
     int breakFromScan;
@@ -650,21 +653,21 @@ public class AutoFunctions extends LinearOpMode {
         navSystem.Move(3.5f,0f,.4f);
         //go to junction and lift
         sleep(100);
-        navSystem.Move(0f,-14.8f,.4f);
+        navSystem.Move(0f,-16.8f,.8f);
         sleep(100);
         liftManager.Lift(5);
         sleep(100);
-        navSystem.Move(14.2f,0f,.4f);
+        navSystem.Move(16.2f,0f,.8f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        navSystem.Move(0f,-2f,.4f);
+        navSystem.Move(0f,-4f,.8f);
         sleep(100);
-        navSystem.Move(36f,0f, .7f);
+        navSystem.Move(36f,0f, .8f);
         sleep(100);
         liftManager.Lift(0);
         sleep(100);
-        navSystem.Move(0,15f,.4f);
+        navSystem.Move(0,17f,.8f);
         sleep(100);
         navSystem.SnapToHeading(0,.4f);
         GrabCone();
@@ -733,7 +736,7 @@ public class AutoFunctions extends LinearOpMode {
             sleep(100);
             navSystem.Move(-stackLocation.x, 0, .3f);
             sleep(100);
-            navSystem.Move(0, stackLocation.z, .5f);
+            navSystem.Move(0, stackLocation.z, .8f);
             sleep(100);
             CloseClaw();
             sleep(750);
@@ -741,7 +744,7 @@ public class AutoFunctions extends LinearOpMode {
             sleep(100);
             navSystem.SnapToHeading(0,.4f);
             sleep(100);
-            navSystem.Move(0, -24.5f, .4f);
+            navSystem.Move(0, -24.5f, .8f);
             sleep(100);
             DropConeLeft();
             sleep(100);
@@ -759,13 +762,13 @@ public class AutoFunctions extends LinearOpMode {
         sleep(100);
         navSystem.Move(-stackLocation.x, 0, .4f);
         sleep(100);
-        navSystem.Move(0, (stackLocation.z), .4f);
+        navSystem.Move(0, (stackLocation.z), .8f);
         sleep(100);
-        navSystem.Move(-10.5f,0,.4f);
+        navSystem.Move(-14f,0,.8f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        navSystem.Move(10.5f,0,.4f);
+        navSystem.Move(14f,0,.8f);
         sleep(100);
     }
 

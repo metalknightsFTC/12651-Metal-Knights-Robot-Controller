@@ -4,6 +4,10 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.Enums.Motor;
+import org.firstinspires.ftc.teamcode.UtilityClasses.DriveTrainController;
+import org.firstinspires.ftc.teamcode.UtilityClasses.IMUController;
+import org.firstinspires.ftc.teamcode.UtilityClasses.LiftManager;
+import org.firstinspires.ftc.teamcode.UtilityClasses.NavigationManager;
 
 @TeleOp
 public class ProjectAluminumKnight extends LinearOpMode {
