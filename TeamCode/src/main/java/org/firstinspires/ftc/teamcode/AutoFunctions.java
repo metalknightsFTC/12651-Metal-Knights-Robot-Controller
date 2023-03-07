@@ -81,10 +81,9 @@ public class AutoFunctions extends LinearOpMode {
         CloseClaw();
         imu.ResetAngle();
         targetHeading = imu.GetAngle();
-        GrabCone();
-        //CheckForModel();
-        //SetRoutine();
-        //RunRoutine();
+        CheckForModel();
+        SetRoutine();
+        RunRoutine();
     }
 
     //region Run the Autonomous
@@ -559,7 +558,7 @@ public class AutoFunctions extends LinearOpMode {
         //polynomial
         float z =  (float)(108f + ((-1.28f * deltaBound) + (0.00462f * Math.pow(deltaBound,2))));
 
-        return new Vector2(x,7.15f);
+        return new Vector2(x,z+offset);
     }
 
     int breakFromScan;
@@ -653,27 +652,25 @@ public class AutoFunctions extends LinearOpMode {
         navSystem.Move(3.5f,0f,.4f);
         //go to junction and lift
         sleep(100);
-        navSystem.Move(0f,-16.8f,.8f);
+        navSystem.Move(0f,-14.8f,.45f);
         sleep(100);
         liftManager.Lift(5);
         sleep(100);
-        navSystem.Move(16.2f,0f,.8f);
+        navSystem.Move(14.2f,0f,.45f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        navSystem.Move(0f,-4f,.8f);
+        navSystem.Move(0f,-2f,.45f);
         sleep(100);
-        navSystem.Move(36f,0f, .8f);
+        navSystem.Move(34f,0f, .6f);
         sleep(100);
         liftManager.Lift(0);
         sleep(100);
-        navSystem.Move(0,17f,.8f);
+        navSystem.Move(0,17f,.45f);
         sleep(100);
         navSystem.SnapToHeading(0,.4f);
         GrabCone();
     }
-
-
 
     private void RedRightSide()
     {
@@ -723,20 +720,26 @@ public class AutoFunctions extends LinearOpMode {
         navSystem.Move(46,0f,.5f);
     }
 
+    int liftLevel = 4;
     private void GrabCone()
     {
-        OpenClaw();
-        sleep(100);
-        ScanForStack();
-        if(!problem)
+        if(!problem && liftLevel >= 0)
         {
-            liftManager.Lift(4);
+            OpenClaw();
+            sleep(100);
+            if(liftLevel != 4)
+            {
+                JunctionAlignment();
+            }else {
+                ScanForStack();
+            }
+            liftManager.Lift(liftLevel);
             telemetry.addData("Position: ", stackLocation.toString());
             telemetry.update();
             sleep(100);
             navSystem.Move(-stackLocation.x, 0, .3f);
             sleep(100);
-            navSystem.Move(0, stackLocation.z, .8f);
+            navSystem.Move(0, stackLocation.z, .45f);
             sleep(100);
             CloseClaw();
             sleep(750);
@@ -744,15 +747,19 @@ public class AutoFunctions extends LinearOpMode {
             sleep(100);
             navSystem.SnapToHeading(0,.4f);
             sleep(100);
-            navSystem.Move(0, -24.5f, .8f);
+            navSystem.Move(0, -24.5f, .45f);
             sleep(100);
             DropConeLeft();
             sleep(100);
             liftManager.Lift(0);
             sleep(1000);
+            liftLevel--;
+            if(!problem && liftLevel >= 0)
+            {
+                GrabCone();
+            }
         }
     }
-
 
     private void DropConeLeft()
     {
@@ -762,13 +769,13 @@ public class AutoFunctions extends LinearOpMode {
         sleep(100);
         navSystem.Move(-stackLocation.x, 0, .4f);
         sleep(100);
-        navSystem.Move(0, (stackLocation.z), .8f);
+        navSystem.Move(0, 5.15f, .4f);
         sleep(100);
-        navSystem.Move(-14f,0,.8f);
+        navSystem.Move(-11f,0,.45f);
         sleep(100);
         OpenClaw();
         sleep(100);
-        navSystem.Move(14f,0,.8f);
+        navSystem.Move(11f,0,.45f);
         sleep(100);
     }
 

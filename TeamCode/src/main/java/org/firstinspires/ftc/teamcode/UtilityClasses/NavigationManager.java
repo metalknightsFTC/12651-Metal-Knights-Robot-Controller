@@ -22,6 +22,7 @@ public class NavigationManager
     public static double c = 6.1575216; //Circumference of dead wheels (Math.PI) * (diameter / 2);//6.1575216
     public static float rampDown = 3f;
     double errorMargin = .12f;
+    public String debug = "";
 
     public NavigationManager(HardwareMap hardwareMap,IMUController imu, DriveTrainController driveTrainController)
     {
@@ -43,9 +44,8 @@ public class NavigationManager
     //slows down after a threshold is reached
     //region Movement code
     //the total amount the robot has moved
-    int to = 0;
-    double totalMovementX = 0;
-    double totalMovementZ = 0;
+    public double totalMovementX = 0;
+    public double totalMovementZ = 0;
     public void Move(float X, float Z, float speed)
     {
         //how far the robot has left to move
@@ -67,7 +67,7 @@ public class NavigationManager
         //configure the ramp down based on target speed
         if(speed > .8f)
         {
-            rampDown = 20f;
+            rampDown = 25f;
         }else if(speed > .6f)
         {
             rampDown = 12.5f;
@@ -121,8 +121,79 @@ public class NavigationManager
         totalMovementX = 0;
         totalMovementZ = 0;
         driveTrainController.UpdateDriveTrain(new Vector3(0,0,0));
-        to = 0;
     }
+
+    public void MoveTO(float X, float Z, float speed)
+    {
+        debug = "";
+        //how far the robot has left to move
+        double xDist = X;
+        double zDist = Z;
+        //how far the robot has moved so far
+        //previously measured encoder positions
+        double rearEncoderRotation;
+        double rightEncoderRotation;
+        double leftEncoderRotation;
+        //currently measured encoder rotation
+        double currentLeftEncoderRotation = 0;
+        double currentRightEncoderRotation = 0;
+        double currentRearEncoderRotation = 0;
+        //the distance between the current encoder positions and the previous encoder positions
+        double deltaLeft;
+        double deltaRight;
+        double deltaBack;
+        //configure the ramp down based on target speed
+        if(speed > .8f)
+        {
+            rampDown = 20f;
+        }else if(speed > .6f)
+        {
+            rampDown = 12.5f;
+        }else
+        {
+            rampDown = 2.75f;
+        }
+        if (!(xDist < -errorMargin || xDist > errorMargin || zDist < -errorMargin || zDist > errorMargin))
+        {
+            driveTrainController.UpdateDriveTrain(Vector3.zero());
+            return;
+        }
+        //region checks
+        if (xDist < -errorMargin || xDist > errorMargin || zDist < -errorMargin || zDist > errorMargin) {
+            //region Odometry Math
+            leftEncoderRotation = currentLeftEncoderRotation;
+            rightEncoderRotation = currentRightEncoderRotation;
+            rearEncoderRotation = currentRearEncoderRotation;
+
+            currentRightEncoderRotation = right.getCurrentPosition();
+            currentRearEncoderRotation = rear.getCurrentPosition();
+            currentLeftEncoderRotation = left.getCurrentPosition();
+
+            deltaLeft = ((currentLeftEncoderRotation - leftEncoderRotation) / tpr) * c;
+            deltaRight = ((currentRightEncoderRotation - rightEncoderRotation) / tpr) * c;
+            deltaBack = ((currentRearEncoderRotation - rearEncoderRotation) / tpr) * c;
+            //endregion
+
+            totalMovementZ += ((deltaLeft + deltaRight) / 2);
+            totalMovementX += deltaBack;
+
+            xDist = X - totalMovementX;
+            zDist = Z - totalMovementZ;
+
+            float deltaX = (float) (X - totalMovementX) / rampDown;
+            float deltaZ = (float) (Z - totalMovementZ) / rampDown;
+            deltaX = Range(deltaX);
+            deltaZ = Range(deltaZ);
+            float turnMod = (float) imu.AngleDeviation(targetHeading) / 20;
+            debug += "X, Z: " + xDist + ", " + zDist;
+            float x = speed * deltaX;
+            float y = -turnMod * speed;
+            float z = speed * deltaZ;
+
+            //endregion
+        }
+    }
+
     public void SnapToHeading(float target, float speed)
     {
         float deltaNC = (imu.GetAngle() - target);
@@ -141,6 +212,8 @@ public class NavigationManager
 
     public void ResetNavigationSystem()
     {
+        totalMovementX = 0;
+        totalMovementZ = 0;
         right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

@@ -28,6 +28,7 @@ public class DriveTrainController {
         InitializeGamepad(gamepad);
         InitializeHardware(hardwareMap);
     }
+
     public void  UpdateDriveTrain(float speed, float strafeCorrection)
     {
         UpdateInput();

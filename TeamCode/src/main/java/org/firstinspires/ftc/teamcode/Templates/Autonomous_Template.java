@@ -205,7 +205,7 @@ public class Autonomous_Template extends LinearOpMode {
     {
         while(startPoint == StartPoint.UnSet && !isStopRequested())
         {
-            telemetry.addData("X: ","Left");
+            telemetry.addData("X: ","Red Side Left");
             telemetry.addData("A: ","Red Side Right");
 
             telemetry.addData("Y: ","Blue Side Left");

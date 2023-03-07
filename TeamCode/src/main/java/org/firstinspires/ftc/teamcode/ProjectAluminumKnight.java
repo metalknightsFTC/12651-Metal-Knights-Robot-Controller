@@ -8,6 +8,8 @@ import org.firstinspires.ftc.teamcode.UtilityClasses.DriveTrainController;
 import org.firstinspires.ftc.teamcode.UtilityClasses.IMUController;
 import org.firstinspires.ftc.teamcode.UtilityClasses.LiftManager;
 import org.firstinspires.ftc.teamcode.UtilityClasses.NavigationManager;
+import org.firstinspires.ftc.teamcode.Vectors.Vector2;
+import org.firstinspires.ftc.teamcode.Vectors.Vector3;
 
 @TeleOp
 public class ProjectAluminumKnight extends LinearOpMode {
@@ -26,6 +28,8 @@ public class ProjectAluminumKnight extends LinearOpMode {
     private float targetLockHeading;
     private boolean liftLimits = true;
     private boolean hasLocked = false;
+    private boolean givenOrder = false;
+    private Vector2 target = new Vector2();
 
     @Override
     public void runOpMode()
@@ -71,16 +75,56 @@ public class ProjectAluminumKnight extends LinearOpMode {
         {
             currentSpeed = regularSpeed;
         }
-        if(driveTrainController.RSX >= 0.001 || driveTrainController.RSX <= -0.001 ||
-                !(driveTrainController.LSX > 0.02f || driveTrainController.LSX < -0.02f) && !gamepad1.right_stick_button)
+        if(!gamepad1.back)
         {
-            imu.ResetAngle();
-            driveTrainController.UpdateDriveTrain(currentSpeed, StrafeCorrection());
-        }
-        else
-        {
-            SoulsLikeTargetLock();
-            driveTrainController.UpdateDriveTrain(currentSpeed,0);
+            target = Vector2.zero();
+            givenOrder = false;
+            navSystem.ResetNavigationSystem();
+            if(driveTrainController.RSX >= 0.001 || driveTrainController.RSX <= -0.001 ||
+                    !(driveTrainController.LSX > 0.02f || driveTrainController.LSX < -0.02f) && !gamepad1.right_stick_button)
+            {
+                imu.ResetAngle();
+                driveTrainController.UpdateDriveTrain(currentSpeed, StrafeCorrection());
+            }
+            else
+            {
+                SoulsLikeTargetLock();
+                driveTrainController.UpdateDriveTrain(currentSpeed,0);
+            }
+        }else{
+            if(!givenOrder) {
+                givenOrder = true;
+            }
+            if(gamepad1.dpad_up)
+            {
+                target = new Vector2(0,-2);
+            }
+            if(gamepad1.dpad_down)
+            {
+                target = new Vector2(0,2);
+            }
+            if(gamepad1.dpad_left)
+            {
+                target = new Vector2(2,0);
+            }
+            if(gamepad1.dpad_right)
+            {
+                target = new Vector2(-2,0);
+            }
+            navSystem.MoveTO(0,0,0);
+            telemetry.addData("Debug: ", navSystem.totalMovementZ);
+            float xPow = (float) navSystem.totalMovementX - target.x;
+            float zPow = (float) navSystem.totalMovementZ - target.z;
+            xPow = Range(xPow,-1,1) * currentSpeed;
+            zPow = Range(zPow,-1,1) * currentSpeed;
+            if(navSystem.totalMovementZ < target.z - .2 || navSystem.totalMovementZ > target.z + .2
+                    || navSystem.totalMovementX < target.x - .2 || navSystem.totalMovementX > target.x + .2)
+            {
+                driveTrainController.UpdateDriveTrain(new Vector3(xPow, StrafeCorrection() * currentSpeed, zPow));
+            }else
+            {
+                driveTrainController.UpdateDriveTrain(Vector3.zero());
+            }
         }
     }
 

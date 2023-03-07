@@ -13,6 +13,14 @@ public class Vector4 {
 	    this.p = p;
     }
 
+    public Vector4 ()
+    {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        this.p = 0;
+    }
+
     public Vector4 Add(Vector3 vector3){
         x += vector3.x;
         y += vector3.y;

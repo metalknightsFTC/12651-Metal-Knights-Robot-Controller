@@ -5,6 +5,12 @@ public class Vector2 {
 
     public float x,z;
 
+    public Vector2 ()
+    {
+        this.x = 0;
+        this.z = 0;
+    }
+
     public Vector2 (float x, float z)
     {
         this.x = x;
